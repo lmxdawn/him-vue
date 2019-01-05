@@ -32,20 +32,60 @@
 // }]);
 
 (function () {
-    // "use strict"
+    "use strict"
 
-    var args = window._PLUG_IM.q
-        , config = {};
+
+    var plug = {}
+        , utils = {}
+        , config = {}
+        , args = window._PLUG_IM.q || []
+        , host = '';
+
+    // 把接收的参数转为配置
     if (args.length) {
         for (var i = 0; i < args.length; i++)
             config[args[i][0]] = args[i][1] || !0;
     }
 
-    console.log(args);
-    console.log(config);
+    utils.doc = {};
+    utils.doc.getIdNode = function(a) {
+        return document.getElementById(a)
+    };
 
-    setTimeout(function () {
-        console.log(window._PLUG_IM.q);
-    }, 2000)
+    // 初始化
+    (function() {
+        plug.init = function () {
+
+
+        }
+
+
+    })();
+
+
+    // 监听外部添加的方法
+    (function() {
+        // 识别类型
+        var _typeof = "function" === typeof Symbol && "symbol" === typeof Symbol.iterator ? function (e) {
+            return typeof e
+        } : function (e) {
+            return e && "function" === typeof Symbol && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e
+        };
+
+        _PLUG_IM.q.push = function (event) {
+            if ("object" === ("undefined" === typeof event ? "undefined" : _typeof(event)) && event.length) {
+                var action = event[0]
+                    , arg = event[1];
+                switch (action) {
+                    case "init":
+                        console.log(arg);
+                        break;
+                    default:
+                        console.log(action)
+                }
+            }
+        }
+    })();
+
 
 })();

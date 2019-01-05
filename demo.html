@@ -7,11 +7,20 @@
 <body>
 
 
+    <div id="_PLUG_IM">
+
+
+
+    </div>
+
+
 </body>
 
 <!--<script src="http://localhost/im/plug-im/plug-im.js"></script>-->
 
 <script>
+
+    var url = "http://" + window.location.host;
 
     //    var _PLUG_IM = _PLUG_IM || [];
     //    (function() {
@@ -32,7 +41,7 @@
 //        a.async = 1;
         a.src = g;
         m.parentNode.insertBefore(a, m)
-    })(window, document, 'script', 'http://localhost/im/plug-im/plug-im.js', "_PLUG_IM");
+    })(window, document, 'script', url + '/plug-im/plug-im.js', "_PLUG_IM");
 
     _PLUG_IM("sss", 111);
     _PLUG_IM("bbbb", 2222);
@@ -42,8 +51,8 @@
     });
 
     setTimeout(function () {
-        console.log(_PLUG_IM);
-        _PLUG_IM("fffff", 2222)
+        _PLUG_IM("init", 2222);
+        _PLUG_IM("init1")
     }, 1500)
 
 
