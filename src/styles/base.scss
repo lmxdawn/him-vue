@@ -1,0 +1,37 @@
+/*          reset css       */
+*, ::before, ::after {
+    /*选择所有标签*/
+    margin: 0;
+    padding: 0;
+
+    /*清除移动端默认的点击高亮效果*/
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+
+    /*设置所有的元素都是以边框开始计算宽度的 百分比*/
+    box-sizing: border-box;
+}
+body, html {
+    height: 100%;
+    font-family: 'Helvetica Neue',Helvetica,Arial,'Hiragino Sans GB','Microsoft YaHei',sans-serif;
+    font-size: 14px;
+}
+#app {
+    height: 100%;
+}
+a {
+    text-decoration: none;
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+ul, ol {
+    list-style: none;
+}
+
+input {
+    border: none;
+    outline: none;
+    /*清除移动端默认的表单样式*/
+    -webkit-appearance: none;
+}

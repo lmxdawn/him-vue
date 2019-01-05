@@ -1,0 +1,38 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "stage": "vue-cli-service build --mode stage",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "test:unit": "vue-cli-service test:unit"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "js-cookie": "^2.2.0",
+    "postcss-px-to-viewport": "0.0.3",
+    "vue": "^2.5.17",
+    "vue-router": "^3.0.1",
+    "vuex": "^3.0.1"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.0.5",
+    "@vue/cli-plugin-eslint": "^3.0.5",
+    "@vue/cli-plugin-unit-jest": "^3.0.5",
+    "@vue/cli-service": "^3.0.5",
+    "@vue/eslint-config-prettier": "^3.0.5",
+    "@vue/test-utils": "^1.0.0-beta.20",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-jest": "^23.0.1",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.0.1",
+    "vue-template-compiler": "^2.5.17"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
