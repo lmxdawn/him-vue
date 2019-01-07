@@ -20,7 +20,9 @@
             </header>
 
             <main class="im-panel-body">
-
+                <div style="height: 25px;" v-if="!webSocketIsOpen">
+                    <div class="im-chat-warning" style="top: 0;z-index: 3;" v-html="webSocketWarningText"></div>
+                </div>
                 <div class="im-panel-searchbar">
                     <div class="im-panel-searchbar-inner">
                         <img src="./image/search.png" class="im-panel-search">
@@ -37,10 +39,11 @@
                             <span class="im-user-name" :title="item.userName">
                                 {{ item.userName }}
                             </span>
-                                <span class="im-user-remark" :title="item.userRemark">
-                                {{ item.userRemark }}
+                                <span class="im-user-remark" :title="item.lastContent">
+                                {{ item.lastContent }}
                             </span>
                             </div>
+                            <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount }}</div>
                         </li>
                     </template>
                     <a class="im-list-more" @click="userGroupListPush">{{ userGroupListHandleMoreText }}</a>
@@ -209,7 +212,7 @@ export default {
             user: {},
             userGroupList: [],
             userGroupListHandleLoading: false,
-            userGroupListHandleMoreText: "加载更多",
+            userGroupListHandleMoreText: "",
             chatVisible: false,
             emojiList: [
                 {
@@ -316,7 +319,7 @@ export default {
             chatMsgList: [],
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
-            chatMsgListHandleMoreText: "加载更多消息",
+            chatMsgListHandleMoreText: "",
             webSocket: null,
             webSocketReconnectCount: 0,
             webSocketWarningText:
@@ -333,6 +336,13 @@ export default {
             this.userGroupListPush();
             // 初始化 WebSocket
             this.webSocketInit();
+            // 打开通知
+            Notification.requestPermission().then(function(result) {
+                // result可能是是granted, denied, 或default.
+                if (result) {
+                    // console.log(result);
+                }
+            });
         },
         // 打开聊天界面
         handleChat(item) {
@@ -340,10 +350,10 @@ export default {
             this.chatUser = item;
             this.chatMsgList = [];
             // 追加
-            this.chatMsgListPush();
+            this.chatMsgListPush(item);
         },
         // 追加历史消息列表
-        chatMsgListPush() {
+        chatMsgListPush(item) {
             if (this.chatMsgListHandleLoading) {
                 return false;
             }
@@ -352,7 +362,7 @@ export default {
                 this.chatMsgListScrollTop = false;
             }
             if (this.chatMsgListHandle) {
-                const chatMsgList = this.chatMsgListHandle();
+                const chatMsgList = this.chatMsgListHandle(item);
                 if (chatMsgList && chatMsgList.then) {
                     this.chatMsgListHandleLoading = true;
                     this.chatMsgListHandleMoreText = "加载中";
@@ -380,7 +390,7 @@ export default {
                         })
                         .catch(() => {
                             this.chatMsgListHandleLoading = false;
-                            this.chatMsgListHandleMoreText = "加载更多消息";
+                            this.chatMsgListHandleMoreText = "";
                         });
                 } else if (typeof chatMsgList === Array) {
                     this.chatMsgListHandleLoading = false;
@@ -451,7 +461,7 @@ export default {
                         })
                         .catch(() => {
                             this.userGroupListHandleLoading = false;
-                            this.userGroupListHandleMoreText = "加载更多";
+                            this.userGroupListHandleMoreText = "";
                         });
                 } else if (typeof userGroupList === Array) {
                     this.userGroupListHandleLoading = false;
@@ -517,8 +527,10 @@ export default {
         // 接收到消息时
         webSocketHandleMessage(e) {
             let data = this.webSocketDecode(e.data);
-            if (data.userId) {
+            if (data.userId === this.chatUser.userId) {
                 this.receiveMessage(data);
+            } else {
+                this.notification(data);
             }
         },
         // 发送消息
@@ -600,6 +612,39 @@ export default {
             str = str.replace(/"/g, "&quot;");
             str = str.replace(/'/g, "&#039;");
             return str;
+        },
+        notification(item) {
+
+            let isUser = false;
+            this.userGroupList.forEach(function (user) {
+                 if (user.userId === item.userId) {
+                     isUser = true;
+                     user.lastContent = item.content;
+                     user.unMsgCount += item.unMsgCount > 0 ? parseInt(item.unMsgCount) : 1;
+                 }
+            });
+            if (!isUser) {
+                let user = {
+                    userId: item.userId,
+                    userName: item.userName,
+                    avatar: item.avatar,
+                    lastContent: item.content,
+                    unMsgCount: 1
+                };
+                this.userGroupList.unshift(user);
+            }
+
+            if (Notification.permission === "granted") {
+                var notification = new Notification(item.userName, {
+                    body: item.content,
+                    icon: item.avatar
+                });
+                const _this = this;
+                notification.onclick = function() {
+                    _this.handleChat(item);
+                    notification.close();
+                };
+            }
         }
     },
     directives: {
@@ -620,6 +665,25 @@ export default {
         // 判断是否自动初始化
         if (this.isAutoInit) {
             this.init();
+            let data = {
+                userId: 1,
+                userName: "是是是",
+                avatar: "https://ss2.baidu.com/6ONYsjip0QIZ8tyhnq/it/u=2386426253,3673879670&fm=58",
+                content: "反反复复付付付付付"
+            };
+            this.notification(data);
+            const _this = this;
+            setTimeout(function () {
+                data.content = "vvvvvvvv";
+                _this.notification(data);
+            }, 1500);
+
+            setTimeout(function () {
+                data.userId = 2;
+                data.userName = "cccvvvv";
+                data.content = "vvvvvvvv";
+                _this.notification(data);
+            }, 2000);
         }
     },
     computed: {
@@ -814,7 +878,7 @@ input {
 }
 .im-panel-searchbar {
     position: relative;
-    background-color: #d9d9d9;
+    background-color: #f8f8f8;
     box-sizing: border-box;
     padding: 5px 7px;
     z-index: 1;
@@ -824,7 +888,7 @@ input {
     height: 28px;
     padding-left: 25px;
     background-color: #fff;
-    border-radius: 2px;
+    border-radius: 3px;
 }
 .im-panel-search {
     position: absolute;
@@ -843,6 +907,8 @@ input {
     outline: 0;
     outline-offset: -2px;
     vertical-align: middle;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
 }
 .im-panel-user-list {
     li {
@@ -883,6 +949,22 @@ input {
         font-size: 13px;
         color: #999;
         @include text-overflow;
+    }
+    .im-panel-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: #f56c6c;
+        border-radius: 10px;
+        color: #fff;
+        display: inline-block;
+        font-size: 12px;
+        height: 19px;
+        line-height: 19px;
+        padding: 0 5px;
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid #fff;
     }
 }
 .im-list-more {
@@ -1212,6 +1294,10 @@ input {
     border-radius: 3px;
 }
 @media screen and (max-width: 768px) {
+    .im-box {
+        width: 100% !important;
+        height: 100% !important;
+    }
     .im-chat-box {
         width: 100%;
         height: 100%;
