@@ -1,5 +1,5 @@
 <template>
-    <div style="position: fixed;">
+    <div style="position: fixed; user-select:none;">
 
         <div class="im-move" v-show="isMove"></div>
 
@@ -64,7 +64,8 @@
 
         <!--聊天界面-->
         <div class="im-chat-box" v-show="chatVisible" :style="{top: chatMsgListPositionX, left: chatMsgListPositionY}" ref="imChatBox">
-            <header class="im-chat-header" @mousedown="moveChatMsg">
+            <header class="im-chat-header">
+                <div class="im-chat-move" @mousedown="moveChatMsg"></div>
                 <div class="im-chat-user">
                     <img :src="chatUser.avatar" alt="" class="im-chat-user-avatar">
                     <div class="im-chat-user-info">
@@ -215,6 +216,8 @@ export default {
     data() {
         return {
             isMove: false,
+            clientWidth: null,
+            clientHeight: null,
             user: {},
             imBoxPositionX: null,
             imBoxPositionY: null,
@@ -731,15 +734,21 @@ export default {
             // let disY = e.clientY - ele.offsetTop;
             let disX = e.clientX - this.$refs.imChatBox.offsetLeft;
             let disY = e.clientY - this.$refs.imChatBox.offsetTop;
+            let disW = this.$refs.imChatBox.clientWidth;
+            let disH = this.$refs.imChatBox.clientHeight;
             _this.isMove = true;
             document.onmousemove = (e)=>{
-                //鼠标按下并移动的事件
-                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                // 鼠标按下并移动的事件
+                // 用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
                 let left = e.clientX - disX;
                 let top = e.clientY - disY;
-                //绑定元素位置到positionX和positionY上面
-                _this.chatMsgListPositionY = left + 'px';
-                _this.chatMsgListPositionX = top + 'px';
+                // 判断是否到了临界值, 因为用了 transform: translate(-50%, -50%); 所以要除 2
+                if ((top > (disH / 2)) && ((_this.clientHeight - top) > (disH / 2))) {
+                    _this.chatMsgListPositionX = top + 'px';
+                }
+                if ((left > (disW / 2)) && ((_this.clientWidth - left) > (disW / 2))) {
+                    _this.chatMsgListPositionY = left + 'px';
+                }
             };
             document.onmouseup = (e) => {
                 _this.isMove = false;
@@ -761,6 +770,14 @@ export default {
         if (this.isAutoInit) {
             // document.body.appendChild(this.$el);
         }
+        // 获取浏览器可视区域高度
+        this.clientHeight = `${document.documentElement.clientHeight}`;
+        this.clientWidth = `${document.documentElement.clientWidth}`;
+        //console.log(self.clientHeight);
+        window.onresize = function temp() {
+            this.clientHeight = `${document.documentElement.clientHeight}`;
+            this.clientWidth = `${document.documentElement.clientWidth}`;
+        };
     },
     created() {
         // 判断是否自动初始化
@@ -910,7 +927,6 @@ input {
     filter: alpha(opacity=0);
     background-color: #fff;
     z-index: 2147483647;
-    user-select:none;
 }
 .im-box-show {
     transform: translateZ(0);
@@ -959,6 +975,8 @@ input {
 }
 .im-box-move {
     position: absolute;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 10px;
     cursor: move;
@@ -1131,6 +1149,14 @@ input {
     box-shadow: 1px 1px 50px rgba(0, 0, 0, 0.3);
     background-color: #fbfbfb;
 }
+.im-chat-move {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 10px;
+    cursor: move;
+}
 .im-chat-header {
     position: relative;
     height: 80px;
@@ -1138,7 +1164,6 @@ input {
     background-color: #ececec;
     color: #444;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
-    cursor: move;
 }
 .im-chat-warning {
     position: absolute;
