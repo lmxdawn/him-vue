@@ -1,7 +1,12 @@
 <template>
     <div style="position: fixed;">
+
+        <div class="im-move" v-show="isMove"></div>
+
         <div class="im-box" :class="isShow ? 'im-box-show' : ''"
-             :style="imBoxStyle">
+             :style="imBoxStyle"
+             ref="imBox">
+            <div class="im-box-move" @mousedown="moveImBox"></div>
             <header class="im-panel-header">
                 <div class="im-header-user">
                     <div class="im-header-user-name">
@@ -33,7 +38,7 @@
                 <ul class="im-panel-user-list">
 
                     <template v-for="(item) in userGroupList">
-                        <li @click="handleChat(item)" :key="item.userId">
+                        <li @click="handleChat(item)" :key="item.gId">
                             <img :src="item.avatar" alt="" class="im-user-avatar">
                             <div class="im-user-info">
                             <span class="im-user-name" :title="item.userName">
@@ -58,8 +63,8 @@
         </div>
 
         <!--聊天界面-->
-        <div class="im-chat-box" v-show="chatVisible">
-            <header class="im-chat-header">
+        <div class="im-chat-box" v-show="chatVisible" :style="{top: chatMsgListPositionX, left: chatMsgListPositionY}" ref="imChatBox">
+            <header class="im-chat-header" @mousedown="moveChatMsg">
                 <div class="im-chat-user">
                     <img :src="chatUser.avatar" alt="" class="im-chat-user-avatar">
                     <div class="im-chat-user-info">
@@ -209,8 +214,12 @@ export default {
     },
     data() {
         return {
+            isMove: false,
             user: {},
+            imBoxPositionX: null,
+            imBoxPositionY: null,
             userGroupList: [],
+            userGroupMap: [],
             userGroupListHandleLoading: false,
             userGroupListHandleMoreText: "",
             chatVisible: false,
@@ -316,6 +325,8 @@ export default {
             chatUser: {},
             chatTextFocus: false,
             chatText: "",
+            chatMsgListPositionX: null,
+            chatMsgListPositionY: null,
             chatMsgList: [],
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
@@ -438,6 +449,7 @@ export default {
                 }
             }
         },
+        // 追加用户组列表
         userGroupListPush() {
             if (this.userGroupListHandleLoading) {
                 return false;
@@ -454,9 +466,27 @@ export default {
                                 this.userGroupListHandleMoreText = "没有更多了";
                                 return false;
                             }
-                            this.userGroupList = this.userGroupList.concat(
-                                list
-                            );
+                            let gidList = [];
+                            let userGroupListFilter = [];
+                            const _this = this;
+                            list.forEach(item => {
+                                if (_this.userGroupMap.indexOf(item.gid) < 0) {
+                                    gidList.push(item.gid);
+                                    userGroupListFilter.push(item);
+                                }
+                            });
+                            // console.log(_this.userGroupMap);
+                            console.log(_this.userGroupMap.indexOf(101));
+                            if (gidList.length > 0) {
+                                this.userGroupMap = this.userGroupMap.concat(
+                                    gidList
+                                );
+                            }
+                            if (userGroupListFilter.length > 0) {
+                                this.userGroupList = this.userGroupList.concat(
+                                    userGroupListFilter
+                                );
+                            }
                             this.userGroupListHandleMoreText = "加载更多";
                         })
                         .catch(() => {
@@ -617,7 +647,7 @@ export default {
 
             let isUser = false;
             this.userGroupList.forEach(function (user) {
-                 if (user.userId === item.userId) {
+                 if (user.gid === item.gid) {
                      isUser = true;
                      user.lastContent = item.content;
                      user.unMsgCount += item.unMsgCount > 0 ? parseInt(item.unMsgCount) : 1;
@@ -625,6 +655,7 @@ export default {
             });
             if (!isUser) {
                 let user = {
+                    gid: item.gid,
                     userId: item.userId,
                     userName: item.userName,
                     avatar: item.avatar,
@@ -645,6 +676,58 @@ export default {
                     notification.close();
                 };
             }
+        },
+        // 主面板的移动
+        moveImBox(e) {
+            // let ele = e.target;
+            //算出鼠标相对元素的位置
+            const _this = this;
+            // let disX = e.clientX - ele.offsetLeft;
+            // let disY = e.clientY - ele.offsetTop;
+            let disX = e.clientX - this.$refs.imBox.offsetLeft;
+            let disY = e.clientY - this.$refs.imBox.offsetTop;
+            _this.isMove = true;
+            document.onmousemove = (e)=>{
+                //鼠标按下并移动的事件
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+                let top = e.clientY - disY;
+
+                //绑定元素位置到positionX和positionY上面
+                _this.imBoxPositionY = left + 'px';
+                _this.imBoxPositionX = top + 'px';
+
+            };
+            document.onmouseup = (e) => {
+                _this.isMove = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
+        },
+        // 聊天界面的移动
+        moveChatMsg(e) {
+            // let ele = e.target;
+            //算出鼠标相对元素的位置
+            const _this = this;
+            // let disX = e.clientX - ele.offsetLeft;
+            // let disY = e.clientY - ele.offsetTop;
+            let disX = e.clientX - this.$refs.imChatBox.offsetLeft;
+            let disY = e.clientY - this.$refs.imChatBox.offsetTop;
+            _this.isMove = true;
+            document.onmousemove = (e)=>{
+                //鼠标按下并移动的事件
+                //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+                let left = e.clientX - disX;
+                let top = e.clientY - disY;
+                //绑定元素位置到positionX和positionY上面
+                _this.chatMsgListPositionY = left + 'px';
+                _this.chatMsgListPositionX = top + 'px';
+            };
+            document.onmouseup = (e) => {
+                _this.isMove = false;
+                document.onmousemove = null;
+                document.onmouseup = null;
+            };
         }
     },
     directives: {
@@ -666,6 +749,7 @@ export default {
         if (this.isAutoInit) {
             this.init();
             let data = {
+                gid: 1,
                 userId: 1,
                 userName: "是是是",
                 avatar: "https://ss2.baidu.com/6ONYsjip0QIZ8tyhnq/it/u=2386426253,3673879670&fm=58",
@@ -679,6 +763,7 @@ export default {
             }, 1500);
 
             setTimeout(function () {
+                data.gid = 2;
                 data.userId = 2;
                 data.userName = "cccvvvv";
                 data.content = "vvvvvvvv";
@@ -706,6 +791,12 @@ export default {
             }
             if (this.right) {
                 data.right = this.right;
+            }
+            if (this.imBoxPositionX && this.isShow) {
+                data.top = this.imBoxPositionX;
+            }
+            if (this.imBoxPositionY && this.isShow) {
+                data.left = this.imBoxPositionY;
             }
             return data;
         }
@@ -790,6 +881,19 @@ input {
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
 }
+.im-move {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    cursor: move;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    background-color: #fff;
+    z-index: 2147483647;
+    user-select:none;
+}
 .im-box-show {
     transform: translateZ(0);
 }
@@ -835,29 +939,37 @@ input {
     width: 22px;
     height: 22px;
 }
+.im-box-move {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    cursor: move;
+}
 .im-panel-header {
     background-color: #6ed0ce;
     color: #fff;
-    height: 60px;
+    height: 80px;
     padding: 7px 10px;
     zoom: 1;
     font-size: 16px;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
     overflow: hidden;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
     .im-header-user {
         float: left;
         padding-left: 8px;
+        margin-top: 12px;
         .im-header-user-name {
             display: inline-block;
             width: 175px;
             margin-top: 5px;
-            font-size: 13px;
             @include text-overflow;
         }
         .im-header-user-remark {
             width: 175px;
             margin-top: 1px;
-            font-size: 12px;
+            font-size: 13px;
             @include text-overflow;
         }
     }
@@ -867,7 +979,7 @@ input {
 }
 .im-panel-body {
     position: absolute;
-    top: 60px;
+    top: 80px;
     bottom: 30px;
     right: 0;
     left: 0;
@@ -1008,6 +1120,7 @@ input {
     background-color: #ececec;
     color: #444;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
+    cursor: move;
 }
 .im-chat-warning {
     position: absolute;
@@ -1044,6 +1157,9 @@ input {
     25% { border-color: transparent; background-color: transparent; }          /* 0个点 */
     50% { border-right-color: transparent; background-color: transparent; }    /* 1个点 */
     75% { border-right-color: transparent; }                                   /* 2个点 */
+}
+.im-chat-user {
+    cursor: default;
 }
 .im-chat-user-avatar {
     display: inline-block;
