@@ -347,13 +347,27 @@ export default {
             this.userGroupListPush();
             // 初始化 WebSocket
             this.webSocketInit();
-            // 打开通知
-            Notification.requestPermission().then(function(result) {
-                // result可能是是granted, denied, 或default.
-                if (result) {
-                    // console.log(result);
+            // 打开通知, try 一下, 因为一些浏览器不兼容, 会报错
+            try {
+                var Notification =
+                    window.Notification ||
+                    window.mozNotification ||
+                    window.webkitNotification;
+                // 判断浏览器是否支持桌面通知
+                if (Notification) {
+                    let requestPermission = Notification.requestPermission();
+                    if (requestPermission.then) {
+                        requestPermission.then(function(result) {
+                            // result可能是是granted, denied, 或default.
+                            if (result) {
+                                // console.log(result);
+                            }
+                        });
+                    }
                 }
-            });
+            } catch (e) {
+                // console.log(e);
+            }
         },
         // 打开聊天界面
         handleChat(item) {
@@ -476,7 +490,6 @@ export default {
                                 }
                             });
                             // console.log(_this.userGroupMap);
-                            console.log(_this.userGroupMap.indexOf(101));
                             if (gidList.length > 0) {
                                 this.userGroupMap = this.userGroupMap.concat(
                                     gidList
@@ -665,7 +678,12 @@ export default {
                 this.userGroupList.unshift(user);
             }
 
-            if (Notification.permission === "granted") {
+            var Notification =
+                window.Notification ||
+                window.mozNotification ||
+                window.webkitNotification;
+            // 判断浏览器是否支持桌面通知
+            if (Notification && Notification.permission === "granted") {
                 var notification = new Notification(item.userName, {
                     body: item.content,
                     icon: item.avatar
