@@ -46,7 +46,11 @@ export default {
         userGroupListHandle() {
             const _this = this;
             return new Promise(function(resolve, reject) {
-                userGroupList(_this.query)
+                let data = {
+                    type: "userGroup",
+                    userGroupListPage: _this.query.userGroupListPage
+                };
+                userGroupList(data)
                     .then(response => {
                         _this.query.userGroupListPage += 1;
                         resolve(response.data);
@@ -59,7 +63,11 @@ export default {
         chatMsgListHandle() {
             const _this = this;
             return new Promise(function(resolve, reject) {
-                chatMsgList(_this.query)
+                let data = {
+                    type: "chatMsgList",
+                    userGroupListPage: _this.query.chatMsgListPage
+                };
+                chatMsgList(data)
                     .then(response => {
                         _this.query.chatMsgListPage += 1;
                         resolve(response.data);
@@ -72,6 +80,7 @@ export default {
         userHandle() {
             return new Promise(function(resolve, reject) {
                 let data = {
+                    type: "userInfo",
                     userId: 1,
                     token: "xxxxx"
                 };
