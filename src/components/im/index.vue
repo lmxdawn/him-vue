@@ -25,8 +25,8 @@
             </header>
 
             <main class="im-panel-body">
-                <div style="height: 25px;" v-if="!webSocketIsOpen">
-                    <div class="im-chat-warning" style="top: 0;z-index: 3;" v-html="webSocketWarningText"></div>
+                <div class="im-user-warning-box">
+                    <div class="im-chat-warning" style="top: 0;" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
                 </div>
                 <div class="im-panel-searchbar">
                     <div class="im-panel-searchbar-inner">
@@ -40,15 +40,17 @@
                     <template v-for="(item) in userGroupList">
                         <li @click="handleChat(item)" :key="item.gId">
                             <img :src="item.avatar" alt="" class="im-user-avatar">
-                            <div class="im-user-info">
-                            <span class="im-user-name" :title="item.userName">
-                                {{ item.userName }}
-                            </span>
-                                <span class="im-user-remark" :title="item.lastContent">
-                                {{ item.lastContent }}
-                            </span>
+                            <div class="im-user-left">
+                                <div class="im-user-info">
+                                <span class="im-user-name" :title="item.userName">
+                                    {{ item.userName }}
+                                </span>
+                                    <span class="im-user-remark" :title="item.lastContent">
+                                    {{ item.lastContent }}
+                                </span>
+                                </div>
+                                <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount }}</div>
                             </div>
-                            <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount }}</div>
                         </li>
                     </template>
                     <a class="im-list-more" @click="userGroupListPush">{{ userGroupListHandleMoreText }}</a>
@@ -609,7 +611,7 @@ export default {
                 userId: 2,
                 userName: "接收",
                 avatar:
-                    "//tva4.sinaimg.cn/crop.0.1.1125.1125.180/475bb144jw8f9nwebnuhkj20v90vbwh9.jpg",
+                    "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4",
                 content: "你没发错吧？:emoji[joy]",
                 createTime: Date.parse(new Date())
             };
@@ -787,7 +789,7 @@ export default {
                 gid: 1,
                 userId: 1,
                 userName: "是是是",
-                avatar: "https://ss2.baidu.com/6ONYsjip0QIZ8tyhnq/it/u=2386426253,3673879670&fm=58",
+                avatar: "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4",
                 content: "反反复复付付付付付"
             };
             this.notification(data);
@@ -911,10 +913,15 @@ input {
     width: 100%;
     height: 100%;
     /*border: 1px solid rgba(0, 0, 0, 0.05);*/
-    border-radius: 2px;
-    box-shadow: 1px 1px 50px rgba(0, 0, 0, 0.2);
+    /*border-radius: 5px;*/
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
+    background-image: url("../../assets/image/bg-1.jpg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-color: #f6f6f6;
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 .im-move {
     position: fixed;
@@ -982,7 +989,8 @@ input {
     cursor: move;
 }
 .im-panel-header {
-    background-color: #6ed0ce;
+    /*background-color: #6ed0ce;*/
+    background-color: rgba(245, 245, 245, 0.9);
     color: #fff;
     height: 80px;
     padding: 7px 10px;
@@ -990,8 +998,6 @@ input {
     font-size: 16px;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
     overflow: hidden;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
     .im-header-user {
         float: left;
         padding-left: 8px;
@@ -1023,6 +1029,7 @@ input {
     background-color: #fcfcfc;
     overflow-x: hidden;
     overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.9);
 }
 .im-panel-searchbar {
     position: relative;
@@ -1061,19 +1068,28 @@ input {
 .im-panel-user-list {
     li {
         position: relative;
-        padding: 10px 15px 10px 15px;
+        /*padding: 0 0 0 15px;*/
+        padding-left: 12px;
         font-size: 0;
         cursor: pointer;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        display: flex;
+        overflow: hidden;
+        align-items: center;
     }
     li:hover {
         background-color: rgba(0, 0, 0, 0.05);
     }
+    .im-user-left {
+        position: relative;
+        padding: 12px 0;
+        width: 100%;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    }
     .im-user-avatar {
         display: inline-block;
-        width: 36px;
-        height: 36px;
-        border-radius: 18px;
+        width: 42px;
+        height: 42px;
+        border-radius: 21px;
         box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.1);
         vertical-align: middle;
     }
@@ -1087,14 +1103,14 @@ input {
         display: inline-block;
         width: 100%;
         /*margin-top: 5px;*/
-        font-size: 16px;
+        font-size: 15px;
         @include text-overflow;
     }
     .im-user-remark {
         display: inline-block;
         width: 80px;
         /*margin-top: 7px;*/
-        font-size: 13px;
+        font-size: 12px;
         color: #999;
         @include text-overflow;
     }
@@ -1146,7 +1162,10 @@ input {
     height: 522px;
     z-index: 100;
     border-radius: 2px;
-    box-shadow: 1px 1px 50px rgba(0, 0, 0, 0.3);
+    border: 1px solid #D9D9D9;
+    background-image: url("../../assets/image/bg-5.jpg");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
     background-color: #fbfbfb;
 }
 .im-chat-move {
@@ -1161,7 +1180,8 @@ input {
     position: relative;
     height: 80px;
     padding: 18px 12px 12px;
-    background-color: #ececec;
+    /*background-color: #ececec;*/
+    background-color: rgba(236, 236, 236, 0.9);
     color: #444;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
 }
@@ -1174,10 +1194,15 @@ input {
     line-height: 25px;
     color: #e6a26d;
     font-size: 12px;
-    background-color: #fdf6eb;
+    /*background-color: #fdf6eb;*/
+    background-color: rgba(253, 246, 235, 0.9);
     text-align: center;
-    z-index: 1;
+    z-index: 3;
     opacity: 0.8;
+}
+.im-user-warning-box {
+    height: 25px;
+    background-color: rgba(0, 0, 0, 0);
 }
 .dotting {
     position: absolute;
@@ -1245,6 +1270,7 @@ input {
     padding: 15px 15px 5px;
     overflow-x: hidden;
     overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.9);
 }
 .im-chat-msg-box {
     position: relative;
@@ -1350,6 +1376,7 @@ input {
         margin-left: 0;
         text-align: left;
         background-color: #5fb878;
+        /*background-color: rgba(255, 255, 255, 0.9);*/
         color: #fff;
     }
 }
@@ -1360,7 +1387,8 @@ input {
     right: 0;
     width: 100%;
     height: 140px;
-    background-color: #fff;
+    /*background-color: #fff;*/
+    background-color: rgba(255, 255, 255, 0.9);
     box-shadow: 0 -1px 0 0 rgba(0, 0, 0, 0.04), 0 -2px 0 0 rgba(0, 0, 0, 0.01);
 }
 .im-chat-feature-holder {
@@ -1421,7 +1449,7 @@ input {
         overflow-y: auto;
         resize: none;
         outline: 0;
-        background-color: #fff;
+        background: 0 0;
         border: 0;
         word-break: break-all;
         font-size: 13px;
@@ -1439,8 +1467,10 @@ input {
     top: 3px;
     height: 32px;
     line-height: 32px;
+    background: 0 0;
 }
 .im-chat-send-btn {
+    background: 0 0;
     cursor: pointer;
     display: inline-block;
     vertical-align: top;

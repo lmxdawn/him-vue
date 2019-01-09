@@ -3,7 +3,7 @@
         <div class="view-box">
             <im :isShow="isShow"
                 width="350px"
-                height="700px"
+                height="650px"
                 bottom="0"
                 right="0"
                 :userHandle="userHandle"
@@ -11,7 +11,6 @@
                 :chatMsgListHandle="chatMsgListHandle"
                 :downClick="downClick"
                 :webSocketUrl="webSocketUrl"></im>
-            <div class="is"></div>
         </div>
         <div class="btn-ok" @click="downClick" v-if="!isShow">
             <i class="icon"></i>
