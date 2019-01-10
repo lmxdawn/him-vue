@@ -990,7 +990,7 @@ input {
 }
 .im-panel-header {
     /*background-color: #6ed0ce;*/
-    background-color: rgba(245, 245, 245, 0.9);
+    background-color: rgba(230, 230, 230, 0.7);
     color: #fff;
     height: 80px;
     padding: 7px 10px;
@@ -1087,9 +1087,9 @@ input {
     }
     .im-user-avatar {
         display: inline-block;
-        width: 42px;
-        height: 42px;
-        border-radius: 21px;
+        width: 46px;
+        height: 46px;
+        border-radius: 23px;
         box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.1);
         vertical-align: middle;
     }
@@ -1181,9 +1181,10 @@ input {
     height: 80px;
     padding: 18px 12px 12px;
     /*background-color: #ececec;*/
-    background-color: rgba(236, 236, 236, 0.9);
+    background-color: rgba(230, 230, 230, 0.7);
     color: #444;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
+    border-bottom: 1px solid #eee;
 }
 .im-chat-warning {
     position: absolute;
