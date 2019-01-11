@@ -12,7 +12,7 @@ const err404 = () =>
     import(/* webpackChunkName: "error" */ "../views/error/err404.vue");
 
 export default new VueRouter({
-    mode: "history", // 后端支持可开
+    // mode: "history", // 后端支持可开
     base: process.env.VUE_APP_ROUTER_BASE,
     routes: [
         {
