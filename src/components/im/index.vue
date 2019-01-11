@@ -39,8 +39,10 @@
 
                     <template v-for="(item) in userGroupList">
                         <li @click="handleChat(item)" :key="item.gId">
-                            <img :src="item.avatar" alt="" class="im-user-avatar">
                             <div class="im-user-left">
+                                <img :src="item.avatar" alt="" class="im-user-avatar">
+                            </div>
+                            <div class="im-user-right">
                                 <div class="im-user-info">
                                 <span class="im-user-name" :title="item.userName">
                                     {{ item.userName }}
@@ -1070,6 +1072,7 @@ input {
         position: relative;
         /*padding: 0 0 0 15px;*/
         padding-left: 12px;
+        height: 65px;
         font-size: 0;
         cursor: pointer;
         display: flex;
@@ -1080,16 +1083,21 @@ input {
         background-color: rgba(0, 0, 0, 0.05);
     }
     .im-user-left {
+        width: 52px;
+        height: 52px;
+    }
+    .im-user-right {
         position: relative;
-        padding: 12px 0;
+        padding: 14px 0;
         width: 100%;
+        /*height: 100%;*/
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
     }
     .im-user-avatar {
         display: inline-block;
-        width: 46px;
-        height: 46px;
-        border-radius: 23px;
+        width: 52px;
+        height: 52px;
+        border-radius: 26px;
         box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.1);
         vertical-align: middle;
     }
@@ -1232,9 +1240,9 @@ input {
 }
 .im-chat-user-avatar {
     display: inline-block;
-    width: 50px;
-    height: 50px;
-    border-radius: 25px;
+    width: 52px;
+    height: 52px;
+    border-radius: 26px;
     box-shadow: 0 3px 3px 0 rgba(0, 0, 0, 0.1);
     vertical-align: middle;
 }
