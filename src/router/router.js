@@ -47,6 +47,15 @@ export default new VueRouter({
             },
             component: () =>
                 import(/* webpackChunkName: "day-video" */ "../views/day/video/detail.vue")
+        },
+        {
+            path: "/test/canvas/poster",
+            name: "poster",
+            meta: {
+                title: "海报图"
+            },
+            component: () =>
+                import(/* webpackChunkName: "poster" */ "../views/test/canvas/poster.vue")
         }
     ]
 });
