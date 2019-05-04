@@ -10,7 +10,8 @@
                 :userGroupListHandle="userGroupListHandle"
                 :chatMsgListHandle="chatMsgListHandle"
                 :downClick="downClick"
-                :webSocketUrl="webSocketUrl"></im>
+                :webSocketUrl="webSocketUrl"
+                :apiBaseUrl="apiBaseUrl"></im>
         </div>
         <div class="btn-ok" @click="downClick" v-if="!isShow">
             <i class="icon"></i>
@@ -32,7 +33,8 @@ export default {
                 userGroupListPage: 1,
                 chatMsgListPage: 1
             },
-            webSocketUrl: "ws://localhost:7272?t=ssss"
+            apiBaseUrl: process.env.VUE_APP_API_BASE,
+            webSocketUrl: process.env.VUE_APP_WEBSOCKET_URL
         };
     },
     components: {

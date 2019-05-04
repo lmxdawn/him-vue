@@ -10,7 +10,7 @@
             <header class="im-panel-header">
                 <div class="im-header-user">
                     <div class="im-header-user-name">
-                        {{ user.userName }}
+                        {{ user.name }}
                     </div>
                     <div class="im-header-user-remark">
                         {{ user.userRemark }}
@@ -164,6 +164,7 @@
 
 <script>
 // @ is an alias to /src
+import {userLoginInfo, userRead} from "./api/userIndex";
 export default {
     name: "Im",
     props: {
@@ -183,6 +184,7 @@ export default {
         left: String,
         bottom: String,
         right: String,
+        apiBaseUrl: String,
         webSocketUrl: String,
         // 是否自动初始化
         isAutoInit: {
@@ -453,22 +455,11 @@ export default {
             this.chatTextFocus = true;
         },
         userInit() {
-            if (this.userHandle) {
-                const user = this.userHandle();
-                if (user && user.then) {
-                    user.then(user => {
-                        if (!user.userId) {
-                            return false;
-                        }
-                        this.user = user;
-                    }).catch(() => {});
-                } else if (typeof user === Object) {
-                    if (!user.userId) {
-                        return false;
-                    }
-                    this.user = user;
-                }
-            }
+            userLoginInfo(this.apiBaseUrl, {})
+                .then(response => {
+                    this.user = response.data;
+                })
+                .catch(() => {});
         },
         // 追加用户组列表
         userGroupListPush() {
