@@ -13,7 +13,7 @@
                         {{ user.name }}
                     </div>
                     <div class="im-header-user-remark">
-                        {{ user.userRemark }}
+                        {{ user.remark }}
                     </div>
                 </div>
                 <div class="im-header-setwin">
@@ -37,25 +37,24 @@
 
                 <ul class="im-panel-user-list">
 
-                    <template v-for="(item) in userGroupList">
-                        <li @click="handleChat(item)" :key="item.gId">
+                    <template v-for="(item) in historyMsgList">
+                        <li @click="handleChat(item)" :key="item.type + item.id">
                             <div class="im-user-left">
                                 <img :src="item.avatar" alt="" class="im-user-avatar">
                             </div>
                             <div class="im-user-right">
                                 <div class="im-user-info">
-                                <span class="im-user-name" :title="item.userName">
-                                    {{ item.userName }}
+                                <span class="im-user-name" :title="item.name">
+                                    {{ item.name }}
                                 </span>
-                                    <span class="im-user-remark" :title="item.lastContent">
-                                    {{ item.lastContent }}
+                                    <span class="im-user-remark" :title="item.lastMsgContent">
+                                    {{ item.lastMsgContent }}
                                 </span>
                                 </div>
                                 <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount }}</div>
                             </div>
                         </li>
                     </template>
-                    <a class="im-list-more" @click="userGroupListPush">{{ userGroupListHandleMoreText }}</a>
                 </ul>
 
             </main>
@@ -74,10 +73,10 @@
                     <img :src="chatUser.avatar" alt="" class="im-chat-user-avatar">
                     <div class="im-chat-user-info">
                         <span class="im-chat-user-name">
-                            {{ chatUser.userName }}
+                            {{ chatUser.name }}
                         </span>
                         <span class="im-chat-user-remark">
-                            {{ chatUser.userRemark }}
+                            {{ chatUser.remark }}
                         </span>
                     </div>
                 </div>
@@ -115,19 +114,19 @@
             </nav>
 
             <main class="im-chat-main" id="chatMsgList">
-                <a class="im-list-more" @click="chatMsgListPush">{{ chatMsgListHandleMoreText }}</a>
+                <a class="im-list-more" @click="getChatMsgList">{{ chatMsgListHandleMoreText }}</a>
                 <template v-for="(item, index) in chatMsgList">
                     <div class="im-chat-msg-box" :class="item.isMine ? 'im-chat-msg-mine' : ''" :key="index">
                         <div class="im-chat-msg-user">
-                            <img :src="item.avatar">
+                            <img :src="item.user.avatar">
                             <div class="im-chat-msg-user-remark" v-if="item.isMine">
-                                <i>{{ item.createTime }}</i><span>{{ item.userName }}</span>
+                                <i>{{ item.createTime }}</i><span>{{ item.user.name }}</span>
                             </div>
                             <div class="im-chat-msg-user-remark" v-else>
-                                <span>{{ item.userName }}</span><i>{{ item.createTime }}</i>
+                                <span>{{ item.name }}</span><i>{{ item.createTime }}</i>
                             </div>
                         </div>
-                        <div class="im-chat-msg-text" v-html="item.content"></div>
+                        <div class="im-chat-msg-text" v-html="item.msgContent"></div>
                     </div>
                 </template>
 
@@ -164,7 +163,13 @@
 
 <script>
 // @ is an alias to /src
-import {userLoginInfo, userRead} from "./api/userIndex";
+import { userLoginInfo } from "./api/userIndex";
+import { userFriendLists } from "./api/userFriend";
+import {
+    userFriendMsgLists,
+    userFriendMsgCreate,
+    userFriendMsgClearUnMsgCount
+} from "./api/userFriendMsg";
 export default {
     name: "Im",
     props: {
@@ -227,10 +232,13 @@ export default {
             user: {},
             imBoxPositionX: null,
             imBoxPositionY: null,
+            userList: {},
+            userFriendList: [],
+            userFriendListLimit: 500, // 每次拉取多少好友
+            historyMsgList: {},
+            historyMsgListSelected: {}, // 历史消息的选中值
             userGroupList: [],
             userGroupMap: [],
-            userGroupListHandleLoading: false,
-            userGroupListHandleMoreText: "",
             chatVisible: false,
             emojiList: [
                 {
@@ -337,6 +345,11 @@ export default {
             chatMsgListPositionX: null,
             chatMsgListPositionY: null,
             chatMsgList: [],
+            chatMsgListFriendQuery: {
+                senderUid: null,
+                page: 1,
+                limit: 10
+            },
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
             chatMsgListHandleMoreText: "",
@@ -352,10 +365,8 @@ export default {
         init() {
             // 初始化用户信息
             this.userInit();
-            // 加载用户组列表
-            this.userGroupListPush();
             // 初始化 WebSocket
-            this.webSocketInit();
+            // this.webSocketInit();
             // 打开通知, try 一下, 因为一些浏览器不兼容, 会报错
             try {
                 var Notification =
@@ -378,16 +389,37 @@ export default {
                 // console.log(e);
             }
         },
+        // 保存所有用户信息
+        pushUserList(uid, name, avatar, remake) {
+            let map = Object.assign({}, this.userList);
+            map[uid] = {
+                uid: uid,
+                name: name,
+                avatar: avatar,
+                remake: remake
+            };
+            this.userList = map;
+        },
         // 打开聊天界面
         handleChat(item) {
+            if (item.unMsgCount > 0 && item.type === 1) {
+                // 清空未读消息数量
+                let query = {
+                    receiverUid: item.id
+                };
+                userFriendMsgClearUnMsgCount(this.apiBaseUrl, query);
+                item.unMsgCount = 0;
+            }
             this.chatVisible = true;
             this.chatUser = item;
             this.chatMsgList = [];
+            this.historyMsgListSelected = item;
+            this.chatMsgListFriendQuery.page = 1;
             // 追加
-            this.chatMsgListPush(item);
+            this.getChatMsgList();
         },
         // 追加历史消息列表
-        chatMsgListPush(item) {
+        getChatMsgList() {
             if (this.chatMsgListHandleLoading) {
                 return false;
             }
@@ -395,46 +427,40 @@ export default {
             if (this.chatMsgList.length !== 0) {
                 this.chatMsgListScrollTop = false;
             }
-            if (this.chatMsgListHandle) {
-                const chatMsgList = this.chatMsgListHandle(item);
-                if (chatMsgList && chatMsgList.then) {
-                    this.chatMsgListHandleLoading = true;
-                    this.chatMsgListHandleMoreText = "加载中";
-                    chatMsgList
-                        .then(list => {
-                            this.chatMsgListHandleLoading = false;
-                            if (list.length === 0) {
-                                this.chatMsgListHandleMoreText = "没有更多了";
-                                return false;
-                            }
-                            for (let i in list) {
-                                if (!list.hasOwnProperty(i)) {
-                                    continue;
-                                }
-                                let data = list[i];
-                                data.content = this.createContent(
-                                    list[i].content
-                                );
-                                data.createTime = this.formatDate(
-                                    data.createTime
-                                );
-                                this.chatMsgList.unshift(data);
-                            }
-                            this.chatMsgListHandleMoreText = "加载更多消息";
-                        })
-                        .catch(() => {
-                            this.chatMsgListHandleLoading = false;
-                            this.chatMsgListHandleMoreText = "";
-                        });
-                } else if (typeof chatMsgList === Array) {
-                    this.chatMsgListHandleLoading = false;
-                    if (chatMsgList.length === 0) {
-                        this.chatMsgListHandleMoreText = "没有更多了";
-                        return false;
-                    }
-                    this.chatMsgList = this.chatMsgList.concat(chatMsgList);
-                    this.chatMsgListHandleMoreText = "加载更多消息";
-                }
+            this.chatMsgListHandleLoading = true;
+            this.chatMsgListHandleMoreText = "加载中";
+            let item = this.historyMsgListSelected;
+            // 如果是好友类型
+            if (item.type === 1) {
+                this.chatMsgListFriendQuery.senderUid = item.id;
+                userFriendMsgLists(this.apiBaseUrl, this.chatMsgListFriendQuery)
+                    .then(response => {
+                        this.chatMsgListFriendQuery.page += 1;
+                        this.chatMsgListHandleLoading = false;
+                        if (response.code !== 0) {
+                            alert(response.message);
+                            return false;
+                        }
+                        let list = response.data;
+                        if (list.length === 0) {
+                            this.chatMsgListHandleMoreText = "没有更多了";
+                            return false;
+                        }
+                        for (let item of list) {
+                            item.user = this.userList[item.senderUid];
+                            item.isMine = this.user.uid === item.senderUid;
+                            item.msgContent = this.createContent(
+                                item.msgContent
+                            );
+                            item.createTime = this.formatDate(item.createTime);
+                            this.chatMsgList.unshift(item);
+                        }
+                        this.chatMsgListHandleMoreText = "加载更多消息";
+                    })
+                    .catch(() => {
+                        this.chatMsgListHandleLoading = false;
+                        this.chatMsgListHandleMoreText = "";
+                    });
             }
         },
         isShowClick() {
@@ -457,65 +483,103 @@ export default {
         userInit() {
             userLoginInfo(this.apiBaseUrl, {})
                 .then(response => {
-                    this.user = response.data;
+                    if (response.code !== 0) {
+                        alert(response.message);
+                        return false;
+                    }
+                    let data = response.data;
+                    this.user = data;
+                    // 添加到用户信息
+                    this.pushUserList(
+                        data.uid,
+                        data.name,
+                        data.avatar,
+                        data.remake
+                    );
+                    // 递归拉取好友
+                    this.getUserFriendList(1, this.userFriendListLimit);
                 })
                 .catch(() => {});
         },
-        // 追加用户组列表
-        userGroupListPush() {
-            if (this.userGroupListHandleLoading) {
-                return false;
-            }
-            if (this.userGroupListHandle) {
-                const userGroupList = this.userGroupListHandle();
-                if (userGroupList && userGroupList.then) {
-                    this.userGroupListHandleLoading = true;
-                    this.userGroupListHandleMoreText = "加载中";
-                    userGroupList
-                        .then(list => {
-                            this.userGroupListHandleLoading = false;
-                            if (list.length === 0) {
-                                this.userGroupListHandleMoreText = "没有更多了";
-                                return false;
-                            }
-                            let gidList = [];
-                            let userGroupListFilter = [];
-                            const _this = this;
-                            list.forEach(item => {
-                                if (_this.userGroupMap.indexOf(item.gid) < 0) {
-                                    gidList.push(item.gid);
-                                    userGroupListFilter.push(item);
-                                }
-                            });
-                            // console.log(_this.userGroupMap);
-                            if (gidList.length > 0) {
-                                this.userGroupMap = this.userGroupMap.concat(
-                                    gidList
-                                );
-                            }
-                            if (userGroupListFilter.length > 0) {
-                                this.userGroupList = this.userGroupList.concat(
-                                    userGroupListFilter
-                                );
-                            }
-                            this.userGroupListHandleMoreText = "加载更多";
-                        })
-                        .catch(() => {
-                            this.userGroupListHandleLoading = false;
-                            this.userGroupListHandleMoreText = "";
-                        });
-                } else if (typeof userGroupList === Array) {
-                    this.userGroupListHandleLoading = false;
-                    if (userGroupList.length === 0) {
-                        this.userGroupListHandleMoreText = "没有更多了";
+        // 获取用户朋友列表
+        getUserFriendList(page, limit) {
+            let query = {
+                page: page,
+                limit: limit
+            };
+            userFriendLists(this.apiBaseUrl, query)
+                .then(response => {
+                    if (response.code !== 0) {
                         return false;
                     }
-                    this.userGroupList = this.userGroupList.concat(
-                        userGroupList
-                    );
-                    this.userGroupListHandleMoreText = "加载更多";
-                }
+                    let data = response.data;
+                    if (data.length <= 0) {
+                        return false;
+                    }
+                    for (let item of data) {
+                        // 聊过天
+                        if (item.lastMsgContent) {
+                            this.pushHistoryMsg(
+                                1,
+                                item.user.uid,
+                                item.remark || item.user.name,
+                                item.user.remark,
+                                item.user.avatar,
+                                item.lastMsgContent,
+                                item.unMsgCount,
+                                item.modifiedTime
+                            );
+                        }
+                        // 添加到用户信息列表
+                        this.pushUserList(
+                            item.user.uid,
+                            item.user.name,
+                            item.user.avatar,
+                            item.user.remake
+                        );
+                    }
+                    this.userFriendList = this.userFriendList.concat(data);
+                    if (data.length < limit) {
+                        return false;
+                    }
+                    this.getUserFriendList(page + 1, limit);
+                })
+                .catch(() => {});
+        },
+        // 追加历史消息 (type: 1:好友,2:群消息)
+        pushHistoryMsg(
+            type,
+            id,
+            name,
+            remark,
+            avatar,
+            lastMsgContent,
+            unMsgCount,
+            modifiedTime
+        ) {
+            let key = type + "-" + id;
+            let map = Object.assign({}, this.historyMsgList);
+            let item = map[key];
+            if (item) {
+                item.lastMsgContent = lastMsgContent;
+                item.unMsgCount += unMsgCount;
+                item.modifiedTime += modifiedTime;
+                map[key] = item;
+                this.historyMsgList = map;
+                return false;
             }
+            let data = {
+                id: id,
+                type: type,
+                name: name,
+                remark: remark,
+                avatar: avatar,
+                lastMsgContent: lastMsgContent,
+                unMsgCount: unMsgCount,
+                modifiedTime: modifiedTime
+            };
+            map[key] = data;
+            this.historyMsgList = map;
         },
         // 初始化 WebSocket
         webSocketInit() {
@@ -580,33 +644,44 @@ export default {
         },
         // 发送按钮点击
         sendBtnClick() {
-            // 未连接
-            if (this.webSocketIsOpen === false) {
-                return false;
-            }
             if (this.chatText.replace(/(^s*)|(s*$)/g, "").length === 0) {
                 return false;
             }
             // let date = new Date();
             const data = {
-                userId: this.user.userId,
-                userName: this.user.userName,
-                avatar: this.user.avatar,
-                content: this.chatText,
-                createTime: Date.parse(new Date())
+                user: this.user,
+                msgContent: this.chatText,
+                createTime: new Date()
             };
-            this.receiveMessage(data);
-            this.chatText = "";
-            // 发送到服务端
-            this.webSocketSend(data);
+            let item = this.historyMsgListSelected;
+            if (item.type === 1) {
+                // 发送
+                let postData = {
+                    receiverUid: item.id,
+                    msgType: 0, // 文本消息
+                    msgContent: this.chatText
+                };
+                userFriendMsgCreate(this.apiBaseUrl, postData)
+                    .then(response => {
+                        if (response.code !== 0) {
+                            alert(response.message);
+                            return false;
+                        }
+                        this.receiveMessage(data);
+                        this.chatText = "";
+                    })
+                    .catch(() => {});
+            }
             // 自动回复消息
             let tempData = {
-                userId: 2,
-                userName: "接收",
-                avatar:
-                    "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4",
-                content: "你没发错吧？:emoji[joy]",
-                createTime: Date.parse(new Date())
+                user: {
+                    uid: 2,
+                    name: "接收",
+                    avatar:
+                        "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4"
+                },
+                msgContent: "你没发错吧？:emoji[joy]",
+                createTime: new Date()
             };
             const _this = this;
             setTimeout(function() {
@@ -617,9 +692,9 @@ export default {
             // 是否自动滚动到底部
             this.chatMsgListScrollTop = true;
             const data = JSON.parse(JSON.stringify(obj));
-            data.isMine = this.user.userId === data.userId;
+            data.isMine = this.user.uid === data.user.uid;
             data.createTime = this.formatDate(data.createTime);
-            data.content = this.createContent(data.content);
+            data.msgContent = this.createContent(data.msgContent);
             this.chatMsgList.push(data);
         },
         createContent(text) {
@@ -637,14 +712,20 @@ export default {
             }
             return text;
         },
-        formatDate(time) {
-            let date = new Date();
-            date.setTime(time);
+        formatDate(dateStr) {
+            let date = new Date(dateStr);
+            let year = date.getFullYear();
+            let month = date.getMonth();
+            month = month < 10 ? "0" + month : month;
+            let day = date.getDay();
+            day = day < 10 ? "0" + day : day;
             let hour = date.getHours();
             hour = hour < 10 ? "0" + hour : hour;
             let minute = date.getMinutes();
             minute = minute < 10 ? "0" + minute : minute;
-            return hour + ":" + minute;
+            let seconds = date.getSeconds();
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            return year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + seconds;
         },
         htmlSpecialChars(str) {
             str = str.replace(/&/g, "&amp;");
@@ -778,27 +859,6 @@ export default {
         // 判断是否自动初始化
         if (this.isAutoInit) {
             this.init();
-            let data = {
-                gid: 1,
-                userId: 1,
-                userName: "是是是",
-                avatar: "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4",
-                content: "反反复复付付付付付"
-            };
-            this.notification(data);
-            const _this = this;
-            setTimeout(function () {
-                data.content = "vvvvvvvv";
-                _this.notification(data);
-            }, 1500);
-
-            setTimeout(function () {
-                data.gid = 2;
-                data.userId = 2;
-                data.userName = "cccvvvv";
-                data.content = "vvvvvvvv";
-                _this.notification(data);
-            }, 2000);
         }
     },
     computed: {
@@ -1063,7 +1123,7 @@ input {
         position: relative;
         /*padding: 0 0 0 15px;*/
         padding-left: 12px;
-        height: 65px;
+        /*height: 65px;*/
         font-size: 0;
         cursor: pointer;
         display: flex;
@@ -1079,7 +1139,7 @@ input {
     }
     .im-user-right {
         position: relative;
-        padding: 14px 0;
+        padding: 18px 0;
         width: 100%;
         /*height: 100%;*/
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -1101,14 +1161,14 @@ input {
     .im-user-name {
         display: inline-block;
         width: 100%;
-        /*margin-top: 5px;*/
+        margin-bottom: 3px;
         font-size: 15px;
         @include text-overflow;
     }
     .im-user-remark {
         display: inline-block;
-        width: 80px;
-        /*margin-top: 7px;*/
+        width: 100%;
+        margin-top: 3px;
         font-size: 12px;
         color: #999;
         @include text-overflow;
