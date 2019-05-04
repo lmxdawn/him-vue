@@ -647,12 +647,6 @@ export default {
             if (this.chatText.replace(/(^s*)|(s*$)/g, "").length === 0) {
                 return false;
             }
-            // let date = new Date();
-            const data = {
-                user: this.user,
-                msgContent: this.chatText,
-                createTime: new Date()
-            };
             let item = this.historyMsgListSelected;
             if (item.type === 1) {
                 // 发送
@@ -667,41 +661,66 @@ export default {
                             alert(response.message);
                             return false;
                         }
-                        this.receiveMessage(data);
+                        let msgType = 0;
+                        this.receiveMessage(
+                            item.type,
+                            item.id,
+                            msgType,
+                            this.user,
+                            this.chatText,
+                            new Date()
+                        );
                         this.chatText = "";
                     })
                     .catch(() => {});
             }
-            // 自动回复消息
-            let tempData = {
-                user: {
-                    uid: 2,
-                    name: "接收",
-                    avatar:
-                        "https://avatars1.githubusercontent.com/u/21293193?s=460&v=4"
-                },
-                msgContent: "你没发错吧？:emoji[joy]",
-                createTime: new Date()
-            };
-            const _this = this;
-            setTimeout(function() {
-                _this.receiveMessage(tempData);
-            }, 1000);
         },
-        receiveMessage(obj) {
+        receiveMessage(type, id, msgType, user, msgContent, createTime) {
             // 是否自动滚动到底部
             this.chatMsgListScrollTop = true;
-            const data = JSON.parse(JSON.stringify(obj));
-            data.isMine = this.user.uid === data.user.uid;
-            data.createTime = this.formatDate(data.createTime);
-            data.msgContent = this.createContent(data.msgContent);
-            this.chatMsgList.push(data);
+            let data = {};
+            data.isMine = this.user.uid === user.uid;
+            if (this.historyMsgListSelected !== null) {
+                data.msgType = msgType;
+                data.user = user;
+                data.msgContent = this.createContent(msgContent);
+                data.createTime = this.formatDate(createTime);
+                this.chatMsgList.push(data);
+            }
+
+            let lastMsgContent = msgContent;
+            switch (msgType) {
+                case 1:
+                    lastMsgContent = "[图片消息]";
+                    break;
+                case 2:
+                    lastMsgContent = "[文件消息]";
+                    break;
+                case 3:
+                    lastMsgContent = "[语言消息]";
+                    break;
+                case 4:
+                    lastMsgContent = "[视频消息]";
+                    break;
+            }
+            let unMsgCount = data.isMine ? 0 : 1;
+            // 更新最后一次接收的消息
+            this.pushHistoryMsg(
+                type,
+                id,
+                null,
+                null,
+                null,
+                lastMsgContent,
+                unMsgCount,
+                createTime
+            );
         },
         createContent(text) {
             if (typeof text === "string") {
                 text = this.htmlSpecialChars(text);
                 let html = text
-                /* eslint-disable */
+                    /* eslint-disable */
                     .replace(/:emoji\[([^\s\[\]]+?)\]/g, function(emoji) {
                         // 转义表情
                         var emojiId = "emoji_" + emoji.replace(/^:emoji/g, "");
