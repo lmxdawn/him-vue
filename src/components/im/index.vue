@@ -7,6 +7,14 @@
              :style="imBoxStyle"
              ref="imBox">
             <div class="im-box-move" @mousedown="moveImBox"></div>
+            
+            <div class="user-qrcode-box" v-if="userQRCodeVisible" @click="userQRCodeCloseHandle">
+                <div class="user-qrcode">
+                    <img :src="userQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(userQRCodeImg)">
+                    <div class="user-qrcode-download" @click.stop="downloadImg(userQRCodeImg)">保存二维码</div>
+                </div>
+            </div>
+            
             <header class="im-panel-header">
                 <div class="im-header-user">
                     <div class="im-header-user-name">
@@ -18,7 +26,7 @@
                 </div>
                 <div class="im-header-setwin">
                     <a href="javascript:;">
-                        <div class="im-header-qrcode">
+                        <div class="im-header-qrcode-box" @click="userQRCodeClick">
                             <img src="./image/qrcode.png" alt="二维码" title="二维码" style="width: 100%; height: 100%;">
                         </div>
                         <i class="im-icon im-icon-ring-open"></i>
@@ -27,7 +35,7 @@
                 </div>
             </header>
 
-            <nav>
+            <nav class="im-tab-nav">
                 <ul class="im-tab">
                     <li v-for="item in imTabList"
                         :key="item.index"
@@ -135,6 +143,14 @@
 
         <!--聊天界面-->
         <div class="im-chat-box" v-show="chatVisible" :style="{top: chatMsgListPositionX, left: chatMsgListPositionY}" ref="imChatBox">
+
+            <div class="group-qrcode-box" v-if="groupQRCodeVisible" @click="groupQRCodeCloseHandle">
+                <div class="group-qrcode">
+                    <img :src="groupQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(groupQRCodeImg)">
+                    <div class="group-qrcode-download" @click.stop="downloadImg(groupQRCodeImg)">保存二维码</div>
+                </div>
+            </div>
+
             <header class="im-chat-header">
                 <div class="im-chat-move" @mousedown="moveChatMsg"></div>
                 <div class="im-chat-user">
@@ -149,6 +165,9 @@
                     </div>
                 </div>
                 <div class="im-chat-setwin">
+                    <div class="im-icon-close" style="cursor: pointer;" @click="groupQRCodeClick" v-if="historyMsgListSelected.type === 2">
+                        <img src="./image/qrcode.png" alt="二维码" title="二维码" style="width: 100%; height: 100%;vertical-align: text-bottom;">
+                    </div>
                     <i class="im-icon im-icon-close" @click="closeChat"></i>
                 </div>
                 <div class="im-chat-warning" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
@@ -231,7 +250,8 @@
 
 <script>
 // @ is an alias to /src
-import { userLoginInfo } from "./api/userIndex";
+var QRCode = require("qrcode");
+import { userLoginInfo, userQRCheckCode } from "./api/userIndex";
 import { userFriendLists } from "./api/userFriend";
 import {
     userFriendMsgLists,
@@ -268,6 +288,8 @@ export default {
         right: String,
         apiBaseUrl: String,
         webSocketUrl: String,
+        userQRCodeUrl: String, // 用户二维码的生成地址
+        groupQRCodeUrl: String, // 群二维码的生成地址
         // 是否自动初始化
         isAutoInit: {
             type: Boolean,
@@ -321,6 +343,10 @@ export default {
                 }
             ],
             imTabSelectedIndex: 0, // 选中的index
+            userQRCodeImg: null,
+            userQRCodeVisible: false,
+            groupQRCodeImg: null,
+            groupQRCodeVisible: false,
             isMove: false,
             clientWidth: null,
             clientHeight: null,
@@ -489,6 +515,103 @@ export default {
             } catch (e) {
                 // console.log(e);
             }
+        },
+        userQRCodeClick() {
+            if (this.userQRCodeImg) {
+                this.userQRCodeVisible = true;
+                return false;
+            }
+            userQRCheckCode(this.apiBaseUrl)
+                .then(response => {
+                    if (response.code !== 0) {
+                        alert(response.message);
+                        return false;
+                    }
+                    var opts = {
+                        errorCorrectionLevel: "H",
+                        type: "image/jpeg",
+                        rendererOpts: {
+                            quality: 0.3
+                        }
+                    };
+                    // 生成二维码
+                    QRCode.toDataURL(
+                        this.userQRCodeUrl
+                            ? this.userQRCodeUrl + "checkCode=" + response.data
+                            : "not data",
+                        opts,
+                        (error, url) => {
+                            if (error) {
+                                alert(error);
+                                return false;
+                            }
+                            this.userQRCodeVisible = true;
+                            this.userQRCodeImg = url;
+                        }
+                    );
+                })
+                .catch(() => {});
+        },
+        // 关闭用户二维码
+        userQRCodeCloseHandle() {
+            this.userQRCodeVisible = false;
+        },
+        // 群二维码
+        groupQRCodeClick() {
+            if (this.groupQRCodeImg) {
+                this.groupQRCodeVisible = true;
+                return false;
+            }
+            userGroupUserCheckCode(
+                this.apiBaseUrl,
+                this.historyMsgListSelected.id
+            )
+                .then(response => {
+                    if (response.code !== 0) {
+                        alert(response.message);
+                        return false;
+                    }
+                    var opts = {
+                        errorCorrectionLevel: "H",
+                        type: "image/jpeg",
+                        rendererOpts: {
+                            quality: 0.3
+                        }
+                    };
+                    // 生成二维码
+                    QRCode.toDataURL(
+                        this.groupQRCodeUrl
+                            ? this.groupQRCodeUrl + "checkCode=" + response.data
+                            : "not data",
+                        opts,
+                        (error, url) => {
+                            if (error) {
+                                alert(error);
+                                return false;
+                            }
+                            this.groupQRCodeVisible = true;
+                            this.groupQRCodeImg = url;
+                        }
+                    );
+                })
+                .catch(() => {});
+        },
+        // 关闭用户二维码
+        groupQRCodeCloseHandle() {
+            this.groupQRCodeVisible = false;
+        },
+        // 点击下载图片
+        downloadImg(url) {
+            // 生成一个a元素
+            var a = document.createElement("a");
+            // 创建一个单击事件
+            var event = new MouseEvent("click");
+            // 将a的download属性设置为我们想要下载的图片名称，若name不存在则使用‘下载图片名称’作为默认名称
+            a.download = this.user.name;
+            // 将生成的URL设置为a.href属性
+            a.href = url;
+            // 触发a的单击事件
+            a.dispatchEvent(event);
         },
         // 保存所有用户信息
         pushUserList(uid, name, avatar, remake) {
@@ -1233,9 +1356,9 @@ input {
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
-    background-image: url("../../assets/image/bg-1.jpg");
+    background-image: url("../../assets/image/bg-5.jpg");
     background-repeat: no-repeat;
-    background-size: 100% 100%;
+    background-size: cover;
     background-color: #f6f6f6;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -1322,16 +1445,19 @@ input {
             display: inline-block;
             width: 175px;
             margin-top: 5px;
+            color: #000;
             @include text-overflow;
         }
         .im-header-user-remark {
             width: 175px;
             margin-top: 1px;
             font-size: 13px;
+            color: rgba(0,0,0,0.6);
             @include text-overflow;
         }
     }
-    .im-header-qrcode {
+    .im-header-qrcode-box {
+        position: relative;
         display: inline-block;
         width: 22px;
         height: 22px;
@@ -1340,12 +1466,58 @@ input {
         float: right;
     }
 }
+.user-qrcode-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    .user-qrcode {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+    .user-qrcode-download {
+        cursor: pointer;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+    }
+}
+.group-qrcode-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    .group-qrcode {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+    .group-qrcode-download {
+        cursor: pointer;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+    }
+}
+.im-tab-nav {
+    background-color: rgba(230, 230, 230, 0.7);
+}
 .im-tab {
     cursor: pointer;
     width: 100%;
     height: 42px;
     line-height: 42px;
-    background-color: rgba(230, 230, 230, 0.7);
     .im-tab-item {
         position: relative;
         display: inline-block;
@@ -1518,7 +1690,7 @@ input {
     border: 1px solid #D9D9D9;
     background-image: url("../../assets/image/bg-5.jpg");
     background-repeat: no-repeat;
-    background-size: 100% 100%;
+    background-size: cover;
     background-color: #fbfbfb;
 }
 .im-chat-move {

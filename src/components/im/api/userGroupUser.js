@@ -46,7 +46,7 @@ export function userGroupUserDelete(apiBaseUrl, groupId) {
 export function userGroupUserCheckCode(apiBaseUrl, groupId) {
     return create(apiBaseUrl)({
         url: "/api/group/user/getCheckCode",
-        method: "post",
+        method: "get",
         params: {
             groupId: groupId
         }

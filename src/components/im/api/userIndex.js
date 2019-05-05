@@ -18,3 +18,11 @@ export function userRead(apiBaseUrl, query) {
         params: query
     });
 }
+// 获取二维码验证信息
+export function userQRCheckCode(apiBaseUrl, query) {
+    return create(apiBaseUrl)({
+        url: "/api/user/getQRCheckCode",
+        method: "get",
+        params: query
+    });
+}
