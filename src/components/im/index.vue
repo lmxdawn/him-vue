@@ -24,7 +24,20 @@
                 </div>
             </header>
 
-            <main class="im-panel-body">
+            <nav>
+                <ul class="im-tab">
+                    <li v-for="item in imTabList"
+                        :key="item.index"
+                        class="im-tab-item"
+                        :class="{'im-tab-item-selected': item.isSelected}"
+                        @click="imTabSelectedHandle(item.index)">
+                        {{ item.title }}
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- 历史消息-->
+            <main class="im-panel-body" v-if="imTabSelectedIndex === 0">
                 <div class="im-user-warning-box">
                     <div class="im-chat-warning" style="top: 0;" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
                 </div>
@@ -40,7 +53,7 @@
                     <template v-for="(item) in historyMsgList">
                         <li @click="handleChat(item)" :key="item.type + item.id">
                             <div class="im-user-left">
-                                <img :src="item.avatar" alt="" class="im-user-avatar">
+                                <img :src="item.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
                             </div>
                             <div class="im-user-right">
                                 <div class="im-user-info">
@@ -59,6 +72,58 @@
 
             </main>
 
+            <!-- 朋友-->
+            <main class="im-panel-body"  v-if="imTabSelectedIndex === 1">
+
+                <ul class="im-panel-user-list">
+
+                    <template v-for="(item) in userFriendList">
+                        <li @click="friendClick(item)" :key="item.uid">
+                            <div class="im-user-left">
+                                <img :src="item.user.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
+                            </div>
+                            <div class="im-user-right">
+                                <div class="im-user-info">
+                                <span class="im-user-name" :title="item.remark ? item.remark : item.user.name">
+                                    {{ item.remark ? item.remark : item.user.name }}
+                                </span>
+                                    <span class="im-user-remark" :title="item.user.remark">
+                                    {{ item.user.remark }}
+                                </span>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+
+            </main>
+
+            <!-- 群组-->
+            <main class="im-panel-body"  v-if="imTabSelectedIndex === 2">
+
+                <ul class="im-panel-user-list">
+
+                    <template v-for="(item) in userGroupList">
+                        <li @click="groupClick(item)" :key="item.groupId">
+                            <div class="im-user-left">
+                                <img :src="item.group.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
+                            </div>
+                            <div class="im-user-right">
+                                <div class="im-user-info">
+                                <span class="im-user-name" :title="item.group.name">
+                                    {{ item.group.name }}
+                                </span>
+                                    <span class="im-user-remark" :title="item.group.remark">
+                                    {{ item.group.remark }}
+                                </span>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+
+            </main>
+
             <footer class="im-panel-footer">
                 底部
             </footer>
@@ -70,7 +135,7 @@
             <header class="im-chat-header">
                 <div class="im-chat-move" @mousedown="moveChatMsg"></div>
                 <div class="im-chat-user">
-                    <img :src="chatUser.avatar" alt="" class="im-chat-user-avatar">
+                    <img :src="chatUser.avatar | getDefaultAvatar" alt="" class="im-chat-user-avatar">
                     <div class="im-chat-user-info">
                         <span class="im-chat-user-name">
                             {{ chatUser.name }}
@@ -118,7 +183,7 @@
                 <template v-for="(item, index) in chatMsgList">
                     <div class="im-chat-msg-box" :class="item.isMine ? 'im-chat-msg-mine' : ''" :key="index">
                         <div class="im-chat-msg-user">
-                            <img :src="item.user.avatar">
+                            <img :src="item.user.avatar | getDefaultAvatar">
                             <div class="im-chat-msg-user-remark" v-if="item.isMine">
                                 <i>{{ item.createTime }}</i><span>{{ item.user.name }}</span>
                             </div>
@@ -170,6 +235,13 @@ import {
     userFriendMsgCreate,
     userFriendMsgClearUnMsgCount
 } from "./api/userFriendMsg";
+import {
+    userGroupUserLists,
+    userGroupUserCreate,
+    userGroupUserUpdate,
+    userGroupUserDelete
+} from "./api/userGroupUser";
+import { userGroupMsgLists, userGroupMsgCreate } from "./api/userGroupMsg";
 export default {
     name: "Im",
     props: {
@@ -226,6 +298,24 @@ export default {
     },
     data() {
         return {
+            imTabList: [
+                {
+                    index: 0,
+                    isSelected: true,
+                    title: "历史"
+                },
+                {
+                    index: 1,
+                    isSelected: false,
+                    title: "朋友"
+                },
+                {
+                    index: 2,
+                    isSelected: false,
+                    title: "群组"
+                }
+            ],
+            imTabSelectedIndex: 0, // 选中的index
             isMove: false,
             clientWidth: null,
             clientHeight: null,
@@ -233,11 +323,12 @@ export default {
             imBoxPositionX: null,
             imBoxPositionY: null,
             userList: {},
-            userFriendList: [],
+            userFriendList: {},
             userFriendListLimit: 500, // 每次拉取多少好友
+            userGroupList: {}, // 群列表
+            userGroupListLimit: 500, // 群列表每次拉取
             historyMsgList: {},
             historyMsgListSelected: {}, // 历史消息的选中值
-            userGroupList: [],
             userGroupMap: [],
             chatVisible: false,
             emojiList: [
@@ -348,7 +439,12 @@ export default {
             chatMsgListFriendQuery: {
                 senderUid: null,
                 page: 1,
-                limit: 10
+                limit: 25
+            },
+            chatMsgListGroupQuery: {
+                groupId: null,
+                page: 1,
+                limit: 25
             },
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
@@ -400,6 +496,20 @@ export default {
             };
             this.userList = map;
         },
+        // 去换Tab
+        imTabSelectedHandle(index) {
+            let data = [];
+            for (let item of this.imTabList) {
+                let isSelected = false;
+                if (item.index === index) {
+                    this.imTabSelectedIndex = index;
+                    isSelected = true;
+                }
+                item.isSelected = isSelected;
+                data.push(item);
+            }
+            this.imTabList = data;
+        },
         // 打开聊天界面
         handleChat(item) {
             if (item.unMsgCount > 0 && item.type === 1) {
@@ -415,6 +525,7 @@ export default {
             this.chatMsgList = [];
             this.historyMsgListSelected = item;
             this.chatMsgListFriendQuery.page = 1;
+            this.chatMsgListGroupQuery.page = 1;
             // 追加
             this.getChatMsgList();
         },
@@ -434,6 +545,36 @@ export default {
             if (item.type === 1) {
                 this.chatMsgListFriendQuery.senderUid = item.id;
                 userFriendMsgLists(this.apiBaseUrl, this.chatMsgListFriendQuery)
+                    .then(response => {
+                        this.chatMsgListFriendQuery.page += 1;
+                        this.chatMsgListHandleLoading = false;
+                        if (response.code !== 0) {
+                            alert(response.message);
+                            return false;
+                        }
+                        let list = response.data;
+                        if (list.length === 0) {
+                            this.chatMsgListHandleMoreText = "没有更多了";
+                            return false;
+                        }
+                        for (let item of list) {
+                            item.user = this.userList[item.senderUid];
+                            item.isMine = this.user.uid === item.senderUid;
+                            item.msgContent = this.createContent(
+                                item.msgContent
+                            );
+                            item.createTime = this.formatDate(item.createTime);
+                            this.chatMsgList.unshift(item);
+                        }
+                        this.chatMsgListHandleMoreText = "加载更多消息";
+                    })
+                    .catch(() => {
+                        this.chatMsgListHandleLoading = false;
+                        this.chatMsgListHandleMoreText = "";
+                    });
+            } else if (item.type === 2) {
+                this.chatMsgListGroupQuery.groupId = item.id;
+                userGroupMsgLists(this.apiBaseUrl, this.chatMsgListFriendQuery)
                     .then(response => {
                         this.chatMsgListFriendQuery.page += 1;
                         this.chatMsgListHandleLoading = false;
@@ -498,6 +639,8 @@ export default {
                     );
                     // 递归拉取好友
                     this.getUserFriendList(1, this.userFriendListLimit);
+                    // 递归拉取群列表
+                    this.getUserGroupList(1, this.userGroupListLimit);
                 })
                 .catch(() => {});
         },
@@ -516,6 +659,7 @@ export default {
                     if (data.length <= 0) {
                         return false;
                     }
+                    let userFriendList = Object.assign({}, this.userFriendList);
                     for (let item of data) {
                         // 聊过天
                         if (item.lastMsgContent) {
@@ -537,14 +681,77 @@ export default {
                             item.user.avatar,
                             item.user.remake
                         );
+                        userFriendList[item.friendUid] = item;
                     }
-                    this.userFriendList = this.userFriendList.concat(data);
+                    this.userFriendList = userFriendList;
                     if (data.length < limit) {
                         return false;
                     }
                     this.getUserFriendList(page + 1, limit);
                 })
                 .catch(() => {});
+        },
+        // 朋友列表的点击
+        friendClick(item) {
+            let data = {
+                type: 1,
+                id: item.friendUid,
+                name: item.remark ? item.remark : item.user.name,
+                avatar: item.user.avatar,
+                remark: item.user.remark
+            };
+            this.handleChat(data);
+        },
+        // 获取群列表
+        getUserGroupList(page, limit) {
+            let query = {
+                page: page,
+                limit: limit
+            };
+            userGroupUserLists(this.apiBaseUrl, query)
+                .then(response => {
+                    if (response.code !== 0) {
+                        return false;
+                    }
+                    let data = response.data;
+                    if (data.length <= 0) {
+                        return false;
+                    }
+                    let userGroupList = Object.assign({}, this.userGroupList);
+                    for (let item of data) {
+                        // 聊过天
+                        if (item.lastMsgContent) {
+                            this.pushHistoryMsg(
+                                2,
+                                item.groupId,
+                                item.remark || item.group.name,
+                                item.group.remark,
+                                item.group.avatar,
+                                item.lastMsgContent,
+                                item.unMsgCount,
+                                item.lastMsgTime
+                            );
+                        }
+                        userGroupList[item.groupId] = item;
+                    }
+                    this.userGroupList = userGroupList;
+                    if (data.length < limit) {
+                        return false;
+                    }
+                    this.getUserGroupList(page + 1, limit);
+                })
+                .catch(() => {});
+        },
+        // 群组列表的点击
+        groupClick(item) {
+            let data = {
+                type: 2,
+                id: item.groupId,
+                name: item.remark ? item.remark : item.group.name,
+                avatar: item.group.avatar,
+                remark: item.group.remark
+            };
+            this.handleChat(data);
         },
         // 追加历史消息 (type: 1:好友,2:群消息)
         pushHistoryMsg(
@@ -861,10 +1068,15 @@ export default {
             }
         }
     },
-    mounted() {
-        if (this.isAutoInit) {
-            // document.body.appendChild(this.$el);
+    filters: {
+        getDefaultAvatar(avatar) {
+            if (avatar === null || avatar === "" || avatar === "") {
+                return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAA5UExURUxpcZmZmZeXl5KSkpeXl4aGhpaWlpiYmJiYmJmZmZiYmJiYmJmZmZmZmZiYmJiYmJmZmZmZmZmZmdWvx4YAAAASdFJOUwCvLRE6BSFlwvdInOzfV4vOeRMffCYAAAIXSURBVFjD7ZZZjuUgDEUhDDZjCPtfbJOJkBGSUkvdUvnrPQUfsLnYJvGHRn4Bv4B/HqDQ9ENvqPsGQC3IYhLCawB2ZGc8vAIoICcD1Q6wfPUSg98OYVsBTmanIcYtFmnbAHbvgmI7g2oC6C1uHP8PRR5aAIaUAdAQFT8QnwGKlfsZwrDMSVcH9Hlxn/ZP8bMQ7RYVrQLWDEq65i8RNl3oGsAu7iYl3CzRpCiig+UybAUwpqAbMLkrv1eh7aETRLhqEt102bZnpY4lnSXgbJOUHQVxfAoMULVIWRnQ6dZ0sFQWB0CbnqeQWnusAObA2bhZ2OvHzjHxCmBWnZ9+5yywgq2bTjCtUuIKABXALMTpsjZNTvpzbNXnIyCsQsKyKImBGnn9nE7XyMijsaoO/DMAqgB8BmBdifzJn9eVGOnzAVTtBDbCiwxcPiYl7/y7pqqsyhq4M+liG+CGcOl/0xuLKprN21fd2RwUKenb+UCZosFz+mlCcak6dZKDsf/tkEUhGedc04+ArAb5EcDeApTxvBttuTWqJ4TgOL6xCN38EYy6BuAm4LTlrFuHGKblNLqyz1wBaNHNRJLiIaFlnyEinAG21G4NUDxscp5MbgD7YhlOAH0AjA0kUJPG7WFs7f0B0J8A/ADQA+SkMq/hAIA64FgN/zrgmAP+FYDW3wO8wluAz60H7wE0z5FnAORBclx5Awh5owz4A6i7yLGDfJ7vAAAAAElFTkSuQmCC";
+            }
+            return avatar;
         }
+    },
+    mounted() {
         // 获取浏览器可视区域高度
         this.clientHeight = `${document.documentElement.clientHeight}`;
         this.clientWidth = `${document.documentElement.clientWidth}`;
@@ -1091,9 +1303,35 @@ input {
         float: right;
     }
 }
+.im-tab {
+    cursor: pointer;
+    width: 100%;
+    height: 42px;
+    line-height: 42px;
+    background-color: rgba(230, 230, 230, 0.7);
+    .im-tab-item {
+        position: relative;
+        display: inline-block;
+        text-align: center;
+        width: 33.33%;
+        height: 100%;
+        &:hover {
+            opacity: 0.5;
+        }
+    }
+    .im-tab-item-selected::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        height: 3px;
+        background-color: #3FDD86;
+    }
+}
 .im-panel-body {
     position: absolute;
-    top: 80px;
+    top: 122px;
     bottom: 30px;
     right: 0;
     left: 0;
@@ -1186,7 +1424,7 @@ input {
     }
     .im-user-remark {
         display: inline-block;
-        width: 100%;
+        width: 200px;
         margin-top: 3px;
         font-size: 12px;
         color: #999;
@@ -1330,7 +1568,8 @@ input {
     @include text-overflow;
 }
 .im-chat-user-remark {
-    width: 100%;
+    display: block;
+    width: 200px;
     /*margin-top: 7px;*/
     font-size: 13px;
     color: #999;
