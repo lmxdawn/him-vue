@@ -78,7 +78,7 @@
                 <ul class="im-panel-user-list">
 
                     <template v-for="(item) in userFriendList">
-                        <li @click="friendClick(item)" :key="item.uid">
+                        <li @click="friendClick(item)" :key="item.friendUid">
                             <div class="im-user-left">
                                 <img :src="item.user.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
                             </div>
@@ -239,7 +239,9 @@ import {
     userGroupUserLists,
     userGroupUserCreate,
     userGroupUserUpdate,
-    userGroupUserDelete
+    userGroupUserDelete,
+    userGroupUserCheckCode,
+    userGroupUserClearUnMsgCount
 } from "./api/userGroupUser";
 import { userGroupMsgLists, userGroupMsgCreate } from "./api/userGroupMsg";
 export default {
@@ -302,7 +304,7 @@ export default {
                 {
                     index: 0,
                     isSelected: true,
-                    title: "历史"
+                    title: "消息"
                 },
                 {
                     index: 1,
@@ -512,12 +514,16 @@ export default {
         },
         // 打开聊天界面
         handleChat(item) {
-            if (item.unMsgCount > 0 && item.type === 1) {
-                // 清空未读消息数量
-                let query = {
-                    receiverUid: item.id
-                };
-                userFriendMsgClearUnMsgCount(this.apiBaseUrl, query);
+            if (item.unMsgCount > 0) {
+                if (item.type === 1) {
+                    // 清空未读消息数量
+                    let query = {
+                        receiverUid: item.id
+                    };
+                    userFriendMsgClearUnMsgCount(this.apiBaseUrl, query);
+                } else if (item.type) {
+                    userGroupUserClearUnMsgCount(this.apiBaseUrl, item.id);
+                }
                 item.unMsgCount = 0;
             }
             this.chatVisible = true;
@@ -574,9 +580,9 @@ export default {
                     });
             } else if (item.type === 2) {
                 this.chatMsgListGroupQuery.groupId = item.id;
-                userGroupMsgLists(this.apiBaseUrl, this.chatMsgListFriendQuery)
+                userGroupMsgLists(this.apiBaseUrl, this.chatMsgListGroupQuery)
                     .then(response => {
-                        this.chatMsgListFriendQuery.page += 1;
+                        this.chatMsgListGroupQuery.page += 1;
                         this.chatMsgListHandleLoading = false;
                         if (response.code !== 0) {
                             alert(response.message);
@@ -588,7 +594,6 @@ export default {
                             return false;
                         }
                         for (let item of list) {
-                            item.user = this.userList[item.senderUid];
                             item.isMine = this.user.uid === item.senderUid;
                             item.msgContent = this.createContent(
                                 item.msgContent
@@ -611,6 +616,7 @@ export default {
         },
         // 关闭
         closeChat() {
+            this.historyMsgListSelected = {};
             this.chatVisible = false;
         },
         // emoji 表情
@@ -855,11 +861,12 @@ export default {
                 return false;
             }
             let item = this.historyMsgListSelected;
+            let msgType = 0; // 文本消息
             if (item.type === 1) {
                 // 发送
                 let postData = {
                     receiverUid: item.id,
-                    msgType: 0, // 文本消息
+                    msgType: msgType,
                     msgContent: this.chatText
                 };
                 userFriendMsgCreate(this.apiBaseUrl, postData)
@@ -868,7 +875,29 @@ export default {
                             alert(response.message);
                             return false;
                         }
-                        let msgType = 0;
+                        this.receiveMessage(
+                            item.type,
+                            item.id,
+                            msgType,
+                            this.user,
+                            this.chatText,
+                            new Date()
+                        );
+                        this.chatText = "";
+                    })
+                    .catch(() => {});
+            } else if (item.type === 2) {
+                let postData = {
+                    groupId: item.id,
+                    msgType: msgType,
+                    msgContent: this.chatText
+                };
+                userGroupMsgCreate(this.apiBaseUrl, postData)
+                    .then(response => {
+                        if (response.code !== 0) {
+                            alert(response.message);
+                            return false;
+                        }
                         this.receiveMessage(
                             item.type,
                             item.id,

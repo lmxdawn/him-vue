@@ -12,12 +12,13 @@ export function userGroupUserLists(apiBaseUrl, query) {
 }
 
 // 加群
-export function userGroupUserCreate(apiBaseUrl, query, data) {
+export function userGroupUserCreate(apiBaseUrl, checkCode) {
     return create(apiBaseUrl)({
         url: "/api/group/user/create",
         method: "post",
-        query: query,
-        data: data
+        params: {
+            checkCode: checkCode
+        }
     });
 }
 
@@ -31,10 +32,34 @@ export function userGroupUserUpdate(apiBaseUrl, data) {
 }
 
 // 删除/退群
-export function userGroupUserDelete(apiBaseUrl, query) {
+export function userGroupUserDelete(apiBaseUrl, groupId) {
     return create(apiBaseUrl)({
-        url: "/api/group/user/create",
+        url: "/api/group/user/delete",
         method: "post",
-        query: query
+        params: {
+            groupId: groupId
+        }
+    });
+}
+
+// 获取验证码
+export function userGroupUserCheckCode(apiBaseUrl, groupId) {
+    return create(apiBaseUrl)({
+        url: "/api/group/user/getCheckCode",
+        method: "post",
+        params: {
+            groupId: groupId
+        }
+    });
+}
+
+// 清空未读消息
+export function userGroupUserClearUnMsgCount(apiBaseUrl, groupId) {
+    return create(apiBaseUrl)({
+        url: "/api/group/user/clearUnMsgCount",
+        method: "post",
+        params: {
+            groupId: groupId
+        }
     });
 }
