@@ -18,6 +18,9 @@
                 </div>
                 <div class="im-header-setwin">
                     <a href="javascript:;">
+                        <div class="im-header-qrcode">
+                            <img src="./image/qrcode.png" alt="二维码" title="二维码" style="width: 100%; height: 100%;">
+                        </div>
                         <i class="im-icon im-icon-ring-open"></i>
                         <i class="im-icon im-icon-panel-down" @click="isShowClick"></i>
                     </a>
@@ -1327,6 +1330,11 @@ input {
             font-size: 13px;
             @include text-overflow;
         }
+    }
+    .im-header-qrcode {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
     }
     .im-header-setwin {
         float: right;
