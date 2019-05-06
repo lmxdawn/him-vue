@@ -23,11 +23,14 @@ export function userGroupUserCreate(apiBaseUrl, checkCode) {
 }
 
 // 更新
-export function userGroupUserUpdate(apiBaseUrl, data) {
+export function userGroupUserUpdate(apiBaseUrl, groupId, remark) {
     return create(apiBaseUrl)({
         url: "/api/group/user/update",
         method: "post",
-        data: data
+        data: {
+            groupId: groupId,
+            remark: remark
+        }
     });
 }
 

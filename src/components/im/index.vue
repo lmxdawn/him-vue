@@ -43,6 +43,10 @@
                         :class="{'im-tab-item-selected': item.isSelected}"
                         @click="imTabSelectedHandle(item.index)">
                         {{ item.title }}
+                        <div class="im-tab-badge"
+                             v-if="item.index === 1 && user.profile.friendAskCount > 0">
+                            new
+                        </div>
                     </li>
                 </ul>
             </nav>
@@ -57,6 +61,10 @@
                         <img src="./image/search.png" class="im-panel-search">
                         <input type="search" placeholder="搜索" class="im-panel-searchbar-core">
                     </div>
+                </div>
+
+                <div class="im-list-empty" v-if="Object.keys(historyMsgList).length === 0">
+                    暂无数据
                 </div>
 
                 <ul class="im-panel-user-list">
@@ -75,8 +83,8 @@
                                     {{ item.lastMsgContent }}
                                 </span>
                                 </div>
-                                <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount }}</div>
                             </div>
+                            <div class="im-panel-badge" v-if="item.unMsgCount > 0">{{ item.unMsgCount > 99 ? '99+' : item.unMsgCount }}</div>
                         </li>
                     </template>
                 </ul>
@@ -86,7 +94,20 @@
             <!-- 朋友-->
             <main class="im-panel-body"  v-if="imTabSelectedIndex === 1">
 
-                <ul class="im-panel-user-list">
+                <div class="im-new-friend" @click="newFriendClick">
+                    <span>{{ newFriendVisible ? '返回' : '新的朋友'}}</span>
+                    <span style="color: red;" v-if="!newFriendVisible && user.profile.friendAskCount > 0">
+                        {{user.profile.friendAskCount}}
+                    </span>
+                </div>
+
+                <div class="im-list-empty"
+                     v-if="(newFriendVisible && newFriendList.length === 0)
+                            || (!newFriendVisible && Object.keys(userFriendList).length === 0)">
+                    暂无数据
+                </div>
+
+                <ul class="im-panel-user-list" v-if="!newFriendVisible">
 
                     <template v-for="(item) in userFriendList">
                         <li @click="friendClick(item)" :key="item.friendUid">
@@ -107,10 +128,50 @@
                     </template>
                 </ul>
 
+                <div v-if="newFriendVisible">
+                    <ul class="im-panel-user-list">
+
+                        <template v-for="item in newFriendList">
+                            <li :key="item.id">
+                                <div class="im-user-left">
+                                    <img :src="item.user && item.user.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
+                                </div>
+                                <div class="im-user-right">
+                                    <div class="im-user-info">
+                                <span class="im-user-name" :title="item.user && item.user.name">
+                                    {{ item.user && item.user.name }}
+                                </span>
+                                        <span class="im-user-remark" :title="item.remark">
+                                    {{ item.remark }}
+                                </span>
+                                    </div>
+                                </div>
+                                <div class="im-user-button" :style="{color: item.status !== 0 ? '#ccc' : ''}">
+                                    <span @click="askAck(item, 1)">{{ item.status | askAckStatusFilterName }}</span>
+                                    <span v-if="item.status === 0" @click="askAck(item, 2)" style="margin-left: 3px;">拒绝</span>
+                                </div>
+                            </li>
+                        </template>
+                    </ul>
+                    <div v-if="newFriendList.length !== 0" class="im-new-friend-list-more" @click="getUserFriendAskList">
+                        {{ newFriendLoadMore ? '加载更多' : '没有更多了'}}
+                    </div>
+                </div>
+
             </main>
 
             <!-- 群组-->
             <main class="im-panel-body"  v-if="imTabSelectedIndex === 2">
+
+                <div class="im-group-create">
+                    <input type="text" v-show="createGroupVisible" v-model="createGroupName" placeholder="输入群昵称" style="">
+                    <span class="im-group-create-button" @click="createGroup">{{ createGroupVisible ? '提交' : '新建'}}</span>
+                    <span class="im-group-create-button"  v-show="createGroupVisible" @click="createGroupClose">取消</span>
+                </div>
+
+                <div class="im-list-empty" v-if="Object.keys(userGroupList).length === 0">
+                    暂无数据
+                </div>
 
                 <ul class="im-panel-user-list">
 
@@ -259,6 +320,13 @@ import {
     userFriendMsgClearUnMsgCount
 } from "./api/userFriendMsg";
 import {
+    userFriendAskLists,
+    userFriendAskCreate,
+    userFriendAskAck,
+    userFriendAskClearFriendAskCount
+} from "./api/userFriendAsk";
+import { userGroupCreate } from "./api/userGroup";
+import {
     userGroupUserLists,
     userGroupUserCreate,
     userGroupUserUpdate,
@@ -314,14 +382,12 @@ export default {
                 return JSON.parse(data);
             }
         },
-        // 用户信息
-        userHandle: Function,
-        // 用户列表
-        userGroupListHandle: Function,
-        // 加载消息列表
-        chatMsgListHandle: Function,
         // 点击了关闭按钮
-        downClick: Function
+        downClick: Function,
+        // 登录初始化完成
+        loginInitHandle: Function,
+        // 请求错误处理
+        requestErrHandle: Function
     },
     data() {
         return {
@@ -350,17 +416,29 @@ export default {
             isMove: false,
             clientWidth: null,
             clientHeight: null,
-            user: {},
+            user: {
+                profile: {}
+            },
             imBoxPositionX: null,
             imBoxPositionY: null,
             userList: {},
             userFriendList: {},
             userFriendListLimit: 500, // 每次拉取多少好友
+            newFriendVisible: false,
+            newFriendQuery: {
+                page: 1,
+                limit: 20
+            },
+            newFriendList: [],
+            newFriendLoading: false,
+            newFriendLoadMore: true, // 是否还可以加载更多
             userGroupList: {}, // 群列表
             userGroupListLimit: 500, // 群列表每次拉取
             historyMsgList: {},
             historyMsgListSelected: {}, // 历史消息的选中值
             userGroupMap: [],
+            createGroupName: "",
+            createGroupVisible: false,
             chatVisible: false,
             emojiList: [
                 {
@@ -488,6 +566,15 @@ export default {
         };
     },
     methods: {
+        setCookie(name, value, expiredays) {
+            var exdate = new Date();
+            exdate.setDate(exdate.getDate() + expiredays);
+            document.cookie =
+                name +
+                "=" +
+                escape(value) +
+                (expiredays == null ? "" : ";expires=" + exdate.toGMTString());
+        },
         // 初始化界面
         init() {
             // 初始化用户信息
@@ -516,6 +603,16 @@ export default {
                 // console.log(e);
             }
         },
+        // 请求错误处理
+        requestErr(code, message) {
+            // 调用外部方法
+            if (
+                this.requestErrHandle &&
+                typeof this.requestErrHandle === "function"
+            ) {
+                this.requestErrHandle(code, message);
+            }
+        },
         userQRCodeClick() {
             if (this.userQRCodeImg) {
                 this.userQRCodeVisible = true;
@@ -524,7 +621,7 @@ export default {
             userQRCheckCode(this.apiBaseUrl)
                 .then(response => {
                     if (response.code !== 0) {
-                        alert(response.message);
+                        this.requestErr(response.code, response.message);
                         return false;
                     }
                     var opts = {
@@ -534,21 +631,17 @@ export default {
                             quality: 0.3
                         }
                     };
+                    let qrCodeUrl = this.userQRCodeUrl + response.data;
+                    console.log(qrCodeUrl);
                     // 生成二维码
-                    QRCode.toDataURL(
-                        this.userQRCodeUrl
-                            ? this.userQRCodeUrl + "checkCode=" + response.data
-                            : "not data",
-                        opts,
-                        (error, url) => {
-                            if (error) {
-                                alert(error);
-                                return false;
-                            }
-                            this.userQRCodeVisible = true;
-                            this.userQRCodeImg = url;
+                    QRCode.toDataURL(qrCodeUrl, opts, (error, url) => {
+                        if (error) {
+                            alert(error);
+                            return false;
                         }
-                    );
+                        this.userQRCodeVisible = true;
+                        this.userQRCodeImg = url;
+                    });
                 })
                 .catch(() => {});
         },
@@ -568,7 +661,7 @@ export default {
             )
                 .then(response => {
                     if (response.code !== 0) {
-                        alert(response.message);
+                        this.requestErr(response.code, response.message);
                         return false;
                     }
                     var opts = {
@@ -578,21 +671,17 @@ export default {
                             quality: 0.3
                         }
                     };
+                    let qrCodeUrl = this.groupQRCodeUrl + response.data;
+                    console.log(qrCodeUrl);
                     // 生成二维码
-                    QRCode.toDataURL(
-                        this.groupQRCodeUrl
-                            ? this.groupQRCodeUrl + "checkCode=" + response.data
-                            : "not data",
-                        opts,
-                        (error, url) => {
-                            if (error) {
-                                alert(error);
-                                return false;
-                            }
-                            this.groupQRCodeVisible = true;
-                            this.groupQRCodeImg = url;
+                    QRCode.toDataURL(qrCodeUrl, opts, (error, url) => {
+                        if (error) {
+                            alert(error);
+                            return false;
                         }
-                    );
+                        this.groupQRCodeVisible = true;
+                        this.groupQRCodeImg = url;
+                    });
                 })
                 .catch(() => {});
         },
@@ -681,7 +770,7 @@ export default {
                         this.chatMsgListFriendQuery.page += 1;
                         this.chatMsgListHandleLoading = false;
                         if (response.code !== 0) {
-                            alert(response.message);
+                            this.requestErr(response.code, response.message);
                             return false;
                         }
                         let list = response.data;
@@ -711,7 +800,7 @@ export default {
                         this.chatMsgListGroupQuery.page += 1;
                         this.chatMsgListHandleLoading = false;
                         if (response.code !== 0) {
-                            alert(response.message);
+                            this.requestErr(response.code, response.message);
                             return false;
                         }
                         let list = response.data;
@@ -757,7 +846,7 @@ export default {
             userLoginInfo(this.apiBaseUrl, {})
                 .then(response => {
                     if (response.code !== 0) {
-                        alert(response.message);
+                        this.requestErr(response.code, response.message);
                         return false;
                     }
                     let data = response.data;
@@ -769,6 +858,13 @@ export default {
                         data.avatar,
                         data.remake
                     );
+                    // 调用外部方法
+                    if (
+                        this.loginInitHandle &&
+                        typeof this.loginInitHandle === "function"
+                    ) {
+                        this.loginInitHandle();
+                    }
                     // 递归拉取好友
                     this.getUserFriendList(1, this.userFriendListLimit);
                     // 递归拉取群列表
@@ -834,6 +930,103 @@ export default {
             };
             this.handleChat(data);
         },
+        // 新的朋友点击
+        newFriendClick() {
+            if (!this.newFriendVisible) {
+                this.newFriendQuery.page = 1;
+                this.newFriendVisible = true;
+                this.newFriendLoadMore = true;
+                this.newFriendList = [];
+                this.getUserFriendAskList();
+                // 清空
+                if (this.user.profile.friendAskCount > 0) {
+                    this.clearFriendAskCount();
+                }
+                return false;
+            }
+            this.newFriendVisible = false;
+        },
+        // 发送好友请求
+        createUserFriendAsk(checkCode, remark) {
+            userFriendAskCreate(this.apiBaseUrl, checkCode, remark)
+                .then(response => {
+                    if (response.code) {
+                        return false;
+                    }
+                })
+                .catch(() => {});
+        },
+        // 确认
+        askAck(item, status) {
+            userFriendAskAck(this.apiBaseUrl, item.id, status)
+                .then(response => {
+                    if (response.code) {
+                        return false;
+                    }
+                    item.status = status;
+                    let userFriendList = Object.assign({}, this.userFriendList);
+                    // 添加到用户信息列表
+                    this.pushUserList(
+                        item.user.uid,
+                        item.user.name,
+                        item.user.avatar,
+                        item.user.remake
+                    );
+                    userFriendList[item.friendUid] = item;
+                    this.userFriendList = userFriendList;
+                    // 追加到历史消息
+                    this.pushHistoryMsg(
+                        1,
+                        item.user.uid,
+                        item.user.name,
+                        item.user.remark,
+                        item.user.avatar,
+                        item.remark ? item.remark : "成为好友，现在开始聊吧~",
+                        0,
+                        new Date()
+                    );
+                })
+                .catch(() => {});
+        },
+        // 清空好友请求数量
+        clearFriendAskCount() {
+            userFriendAskClearFriendAskCount(this.apiBaseUrl)
+                .then(response => {
+                    if (response.code) {
+                        return false;
+                    }
+                    this.user.profile.friendAskCount = 0;
+                })
+                .catch(() => {});
+        },
+        // 获取好友请求列表
+        getUserFriendAskList() {
+            if (!this.newFriendLoadMore || this.newFriendLoading) {
+                return false;
+            }
+            this.newFriendLoading = true;
+            userFriendAskLists(this.apiBaseUrl, this.newFriendQuery)
+                .then(response => {
+                    this.newFriendLoading = false;
+                    if (response.code) {
+                        this.newFriendLoadMore = true;
+                        return false;
+                    }
+                    this.newFriendQuery.page += 1;
+                    let data = response.data;
+                    if (data.length === 0) {
+                        this.newFriendLoadMore = false;
+                        return false;
+                    }
+                    if (data.length < this.newFriendQuery.limit) {
+                        this.newFriendLoadMore = false;
+                    }
+                    this.newFriendList = this.newFriendList.concat(data);
+                })
+                .catch(() => {
+                    this.newFriendLoading = false;
+                });
+        },
         // 获取群列表
         getUserGroupList(page, limit) {
             let query = {
@@ -879,11 +1072,105 @@ export default {
             let data = {
                 type: 2,
                 id: item.groupId,
-                name: item.remark ? item.remark : item.group.name,
+                name: item.group.name,
                 avatar: item.group.avatar,
                 remark: item.group.remark
             };
             this.handleChat(data);
+        },
+        // 创建群
+        createGroup() {
+            this.createGroupVisible = true;
+            if (this.createGroupName.length === 0) {
+                return false;
+            }
+            userGroupCreate(this.apiBaseUrl, this.createGroupName, "", "")
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let data = response.data;
+                    let userGroupList = Object.assign({}, this.userGroupList);
+                    let item = {
+                        groupId: data.groupId,
+                        group: data
+                    };
+                    userGroupList[item.groupId] = item;
+                    this.userGroupList = userGroupList;
+                    this.createGroupVisible = false;
+                    this.createGroupName = "";
+                    // 默认打开群聊天界面
+                    let chatData = {
+                        type: 2,
+                        id: item.groupId,
+                        name: item.group.name,
+                        avatar: item.group.avatar,
+                        remark: item.group.remark
+                    };
+                    this.handleChat(chatData);
+                })
+                .catch(() => {});
+        },
+        // 取消创建群
+        createGroupClose() {
+            this.createGroupVisible = false;
+        },
+        // 加入群
+        joinGroupUser(checkCode) {
+            userGroupUserCreate(this.apiBaseUrl, checkCode)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let item = response.data;
+
+                    let userGroupList = Object.assign({}, this.userGroupList);
+                    this.pushHistoryMsg(
+                        2,
+                        item.groupId,
+                        item.remark || item.group.name,
+                        item.group.remark,
+                        item.group.avatar,
+                        item.lastMsgContent,
+                        item.unMsgCount,
+                        item.lastMsgTime
+                    );
+                    userGroupList[item.groupId] = item;
+                    this.userGroupList = userGroupList;
+                })
+                .catch(() => {});
+        },
+        // 修改在群的信息
+        updateGroupUser(groupId, remark) {
+            userGroupUserUpdate(this.apiBaseUrl, groupId, remark)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                })
+                .catch(() => {});
+        },
+        // 删除/退出群
+        outGroupUser(groupId) {
+            userGroupUserDelete(this.apiBaseUrl, groupId)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let item = response.data;
+
+                    let userGroupList = Object.assign({}, this.userGroupList);
+                    delete userGroupList[item.groupId];
+                    this.userGroupList = userGroupList;
+                    let historyMsgList = Object.assign({}, this.historyMsgList);
+                    delete historyMsgList[2 + "-" + item.groupId];
+                    this.historyMsgList = historyMsgList;
+                })
+                .catch(() => {});
         },
         // 追加历史消息 (type: 1:好友,2:群消息)
         pushHistoryMsg(
@@ -972,7 +1259,7 @@ export default {
         webSocketHandleMessage(e) {
             let data = this.webSocketDecode(e.data);
             if (data.userId === this.chatUser.userId) {
-                this.receiveMessage(data);
+                // this.receiveMessage(data);
             } else {
                 this.notification(data);
             }
@@ -998,12 +1285,15 @@ export default {
                 userFriendMsgCreate(this.apiBaseUrl, postData)
                     .then(response => {
                         if (response.code !== 0) {
-                            alert(response.message);
+                            this.requestErr(response.code, response.message);
                             return false;
                         }
                         this.receiveMessage(
                             item.type,
                             item.id,
+                            item.name,
+                            item.remark,
+                            item.avatar,
                             msgType,
                             this.user,
                             this.chatText,
@@ -1021,12 +1311,15 @@ export default {
                 userGroupMsgCreate(this.apiBaseUrl, postData)
                     .then(response => {
                         if (response.code !== 0) {
-                            alert(response.message);
+                            this.requestErr(response.code, response.message);
                             return false;
                         }
                         this.receiveMessage(
                             item.type,
                             item.id,
+                            item.name,
+                            item.remark,
+                            item.avatar,
                             msgType,
                             this.user,
                             this.chatText,
@@ -1037,7 +1330,17 @@ export default {
                     .catch(() => {});
             }
         },
-        receiveMessage(type, id, msgType, user, msgContent, createTime) {
+        receiveMessage(
+            type,
+            id,
+            name,
+            remark,
+            avatar,
+            msgType,
+            user,
+            msgContent,
+            createTime
+        ) {
             // 是否自动滚动到底部
             this.chatMsgListScrollTop = true;
             let data = {};
@@ -1070,9 +1373,9 @@ export default {
             this.pushHistoryMsg(
                 type,
                 id,
-                null,
-                null,
-                null,
+                name,
+                remark,
+                avatar,
                 lastMsgContent,
                 unMsgCount,
                 createTime
@@ -1226,9 +1529,17 @@ export default {
     filters: {
         getDefaultAvatar(avatar) {
             if (avatar === null || avatar === "" || avatar === "") {
-                return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAA5UExURUxpcZmZmZeXl5KSkpeXl4aGhpaWlpiYmJiYmJmZmZiYmJiYmJmZmZmZmZiYmJiYmJmZmZmZmZmZmdWvx4YAAAASdFJOUwCvLRE6BSFlwvdInOzfV4vOeRMffCYAAAIXSURBVFjD7ZZZjuUgDEUhDDZjCPtfbJOJkBGSUkvdUvnrPQUfsLnYJvGHRn4Bv4B/HqDQ9ENvqPsGQC3IYhLCawB2ZGc8vAIoICcD1Q6wfPUSg98OYVsBTmanIcYtFmnbAHbvgmI7g2oC6C1uHP8PRR5aAIaUAdAQFT8QnwGKlfsZwrDMSVcH9Hlxn/ZP8bMQ7RYVrQLWDEq65i8RNl3oGsAu7iYl3CzRpCiig+UybAUwpqAbMLkrv1eh7aETRLhqEt102bZnpY4lnSXgbJOUHQVxfAoMULVIWRnQ6dZ0sFQWB0CbnqeQWnusAObA2bhZ2OvHzjHxCmBWnZ9+5yywgq2bTjCtUuIKABXALMTpsjZNTvpzbNXnIyCsQsKyKImBGnn9nE7XyMijsaoO/DMAqgB8BmBdifzJn9eVGOnzAVTtBDbCiwxcPiYl7/y7pqqsyhq4M+liG+CGcOl/0xuLKprN21fd2RwUKenb+UCZosFz+mlCcak6dZKDsf/tkEUhGedc04+ArAb5EcDeApTxvBttuTWqJ4TgOL6xCN38EYy6BuAm4LTlrFuHGKblNLqyz1wBaNHNRJLiIaFlnyEinAG21G4NUDxscp5MbgD7YhlOAH0AjA0kUJPG7WFs7f0B0J8A/ADQA+SkMq/hAIA64FgN/zrgmAP+FYDW3wO8wluAz60H7wE0z5FnAORBclx5Awh5owz4A6i7yLGDfJ7vAAAAAElFTkSuQmCC";
+                return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWAgMAAABBb5lxAAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAMUExURUxpcfDw8OPj4+Dg4FOJnTQAAAABdFJOUwBA5thmAAABUElEQVRYw+3Yy22EMBAGYDpLFUMOPlCCS3AVrmNLYJugBB9yy4UDKwHJhhj5Mdj/slYekn3+NPJ4PGNB87ICq2kQtV4x9l5ZZZVV9hvsjdpLnk30ufosG+6sy7HlrqjNsfGLkcqwYWMyw/TGXtNs21q8uYDN34zSbLKsT7LRMoUxmWQGY4NlXQmmLRM/yKwKi3qO6aLR/jJ7NFOB3RBR4iKZB5kq0Vlgny5Y1y8EjRpbBoHNty7DDDYGwaE6s4meneQrex5nn48tVZllI5fowdOmsGh90WiqVKbguWFVAEuP3TfwPQX7dJ9IbYrt3Ux0STBNBwPOY06woPwe0y4TR2wmbx0x4zPJs8VX3pk4bAyYG85hOmSCYxNFq2eYiZlkWKyc27mzhWEUs4ljfcRGjsmIDU+wrrJCzGBVYEuvInZjVFu/ASurrLL/y64N9sv6AwiKosleKgwtAAAAAElFTkSuQmCC";
             }
             return avatar;
+        },
+        askAckStatusFilterName(index) {
+            const map = {
+                0: "确认",
+                1: "已添加",
+                2: "已拒绝"
+            };
+            return map[index];
         }
     },
     mounted() {
@@ -1537,6 +1848,29 @@ input {
         height: 3px;
         background-color: #3FDD86;
     }
+    .im-tab-badge {
+        position: absolute;
+        top: 4px;
+        right: 10px;
+        background-color: #f56c6c;
+        border-radius: 10px;
+        color: #fff;
+        display: inline-block;
+        font-size: 12px;
+        height: 19px;
+        line-height: 19px;
+        padding: 0 5px;
+        text-align: center;
+        white-space: nowrap;
+        border: 1px solid #fff;
+    }
+}
+.im-list-empty {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    color: #999;
 }
 .im-panel-body {
     position: absolute;
@@ -1549,6 +1883,49 @@ input {
     overflow-x: hidden;
     overflow-y: auto;
     background-color: rgba(255, 255, 255, 0.9);
+}
+.im-group-create {
+    height: 40px;
+    color: green;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+    padding-left: 10px;
+    input {
+        height: 25px;
+        padding: 2px 5px;
+        flex: 2;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    .im-group-create-button {
+        cursor: pointer;
+        height: 100%;
+        line-height: 40px;
+        flex: 1;
+    }
+}
+.im-new-friend {
+    height: 40px;
+    line-height: 40px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    padding-right: 50px;
+    padding-left: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+}
+.im-new-friend-list-more {
+    width: 100%;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
 }
 .im-panel-searchbar {
     position: relative;
@@ -1590,7 +1967,6 @@ input {
         /*padding: 0 0 0 15px;*/
         padding-left: 12px;
         /*height: 65px;*/
-        font-size: 0;
         cursor: pointer;
         display: flex;
         overflow: hidden;
@@ -1606,7 +1982,6 @@ input {
     .im-user-right {
         position: relative;
         padding: 18px 0;
-        width: 100%;
         /*height: 100%;*/
         border-bottom: 1px solid rgba(0, 0, 0, 0.04);
     }
@@ -1626,14 +2001,13 @@ input {
     }
     .im-user-name {
         display: inline-block;
-        width: 100%;
         margin-bottom: 3px;
         font-size: 15px;
         @include text-overflow;
     }
     .im-user-remark {
-        display: inline-block;
-        width: 200px;
+        display: block;
+        max-width: 200px;
         margin-top: 3px;
         font-size: 12px;
         color: #999;
@@ -1654,6 +2028,18 @@ input {
         text-align: center;
         white-space: nowrap;
         border: 1px solid #fff;
+    }
+    .im-user-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        color: green;
+        span {
+            cursor: pointer;
+        }
     }
 }
 .im-list-more {

@@ -1,17 +1,19 @@
 <template>
     <div>
         <div class="view-box">
-            <im :isShow="isShow"
+            <im ref="him"
+                :isShow="isShow"
                 width="350px"
                 height="650px"
                 bottom="0"
                 right="0"
-                :userHandle="userHandle"
-                :userGroupListHandle="userGroupListHandle"
-                :chatMsgListHandle="chatMsgListHandle"
-                :downClick="downClick"
+                :apiBaseUrl="apiBaseUrl"
                 :webSocketUrl="webSocketUrl"
-                :apiBaseUrl="apiBaseUrl"></im>
+                :userQRCodeUrl="userQRCodeUrl"
+                :groupQRCodeUrl="groupQRCodeUrl"
+                :downClick="downClick"
+                :loginInitHandle="loginInitHandle"
+                :requestErrHandle="requestErrHandle"></im>
         </div>
         <div class="btn-ok" @click="downClick" v-if="!isShow">
             <i class="icon"></i>
@@ -22,19 +24,18 @@
 
 <script>
 import Im from "../components/im/index";
-import { userInfo, userGroupList, chatMsgList } from "../api/test";
 export default {
     name: "home",
 
     data() {
         return {
             isShow: true,
-            query: {
-                userGroupListPage: 1,
-                chatMsgListPage: 1
-            },
+            userCheckCode: null,
+            groupCheckCode: null,
             apiBaseUrl: process.env.VUE_APP_API_BASE,
-            webSocketUrl: process.env.VUE_APP_WEBSOCKET_URL
+            webSocketUrl: process.env.VUE_APP_WEBSOCKET_URL,
+            userQRCodeUrl: process.env.VUE_APP_USER_QR_CODE_URL,
+            groupQRCodeUrl: process.env.VUE_APP_GROUP_QR_CODE_URL
         };
     },
     components: {
@@ -44,58 +45,38 @@ export default {
         downClick() {
             this.isShow = !this.isShow;
         },
-        userGroupListHandle() {
-            const _this = this;
-            return new Promise(function(resolve, reject) {
-                let data = {
-                    type: "userGroup",
-                    userGroupListPage: _this.query.userGroupListPage
-                };
-                userGroupList(data)
-                    .then(response => {
-                        _this.query.userGroupListPage += 1;
-                        resolve(response.data);
-                    })
-                    .catch(() => {
-                        reject(_this.groupList);
-                    });
-            });
+        // 登录初始化完成
+        loginInitHandle() {
+            // 如果有加朋友的验证码
+            if (this.userCheckCode) {
+                // 发送加好友的请求
+                this.$refs["him"].createUserFriendAsk(this.userCheckCode);
+            }
+            // 如果有加群的验证码
+            if (this.groupCheckCode) {
+                this.$refs["him"].joinGroupUser(this.groupCheckCode);
+            }
         },
-        chatMsgListHandle() {
-            const _this = this;
-            return new Promise(function(resolve, reject) {
-                let data = {
-                    type: "chatMsgList",
-                    userGroupListPage: _this.query.chatMsgListPage
-                };
-                chatMsgList(data)
-                    .then(response => {
-                        _this.query.chatMsgListPage += 1;
-                        resolve(response.data);
-                    })
-                    .catch(() => {
-                        reject([]);
-                    });
-            });
+        requestErrHandle(code, message) {
+            alert(code + "-" + message);
         },
-        userHandle() {
-            return new Promise(function(resolve, reject) {
-                let data = {
-                    type: "userInfo",
-                    userId: 1,
-                    token: "xxxxx"
-                };
-                userInfo(data)
-                    .then(response => {
-                        resolve(response.data);
-                    })
-                    .catch(() => {
-                        reject();
-                    });
-            });
+        getQueryVariable(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (pair[0] === variable) {
+                    return pair[1];
+                }
+            }
+            return false;
         }
     },
-    created() {}
+    mounted() {
+        // 获取get参数
+        this.userCheckCode = this.getQueryVariable("userCheckCode");
+        this.groupCheckCode = this.getQueryVariable("groupCheckCode");
+    }
 };
 </script>
 
