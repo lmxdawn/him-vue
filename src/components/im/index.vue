@@ -220,6 +220,10 @@
                         <span class="im-chat-user-name">
                             {{ chatUser.name }}
                         </span>
+                        <span class="im-chat-user-list-button" v-if="Object.keys(chatMsgGroupUserList).length > 0">
+                            {{Object.keys(chatMsgGroupUserList).length}}人
+                        </span>
+                        <i class="im-icon im-icon-panel-down" v-if="chatUser.type === 2" @click="isShowGroupUserListClick"></i>
                         <span class="im-chat-user-remark">
                             {{ chatUser.remark }}
                         </span>
@@ -261,6 +265,13 @@
                 <div id="emoji_[ok_hand]"><img src="./emoji/ok_hand.png" class="im-chat-msg-emoji" title="ok_hand" alt="ok_hand"></div>
             </nav>
 
+            <div class="im-chat-user-list" v-if="chatMsgGroupUserVisible">
+                <div class="im-chat-user-list-item" v-for="item in chatMsgGroupUserList" :key="item.user.uid">
+                    <img :src="item.user.avatar | getDefaultAvatar">
+                    <cite>{{item.user.name}}</cite>
+                </div>
+            </div>
+
             <main class="im-chat-main" id="chatMsgList">
                 <a class="im-list-more" @click="getChatMsgList">{{ chatMsgListHandleMoreText }}</a>
                 <template v-for="(item, index) in chatMsgList">
@@ -271,7 +282,7 @@
                                 <i>{{ item.createTime }}</i><span>{{ item.user.name }}</span>
                             </div>
                             <div class="im-chat-msg-user-remark" v-else>
-                                <span>{{ item.name }}</span><i>{{ item.createTime }}</i>
+                                <span>{{ item.user.name }}</span><i>{{ item.createTime }}</i>
                             </div>
                         </div>
                         <div class="im-chat-msg-text" v-html="item.msgContent"></div>
@@ -325,7 +336,7 @@ import {
     userFriendAskAck,
     userFriendAskClearFriendAskCount
 } from "./api/userFriendAsk";
-import { userGroupCreate } from "./api/userGroup";
+import { userGroupLists, userGroupCreate } from "./api/userGroup";
 import {
     userGroupUserLists,
     userGroupUserCreate,
@@ -555,6 +566,8 @@ export default {
                 page: 1,
                 limit: 25
             },
+            chatMsgGroupUserList: {},
+            chatMsgGroupUserVisible: false,
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
             chatMsgListHandleMoreText: "",
@@ -747,6 +760,7 @@ export default {
             this.historyMsgListSelected = item;
             this.chatMsgListFriendQuery.page = 1;
             this.chatMsgListGroupQuery.page = 1;
+            this.chatMsgGroupUserList = {};
             // 追加
             this.getChatMsgList();
         },
@@ -761,10 +775,11 @@ export default {
             }
             this.chatMsgListHandleLoading = true;
             this.chatMsgListHandleMoreText = "加载中";
-            let item = this.historyMsgListSelected;
+            let historyItem = this.historyMsgListSelected;
             // 如果是好友类型
-            if (item.type === 1) {
-                this.chatMsgListFriendQuery.senderUid = item.id;
+            if (historyItem.type === 1) {
+                let senderUid = historyItem.id;
+                this.chatMsgListFriendQuery.senderUid = historyItem.id;
                 userFriendMsgLists(this.apiBaseUrl, this.chatMsgListFriendQuery)
                     .then(response => {
                         this.chatMsgListFriendQuery.page += 1;
@@ -779,8 +794,20 @@ export default {
                             return false;
                         }
                         for (let item of list) {
-                            item.user = this.userList[item.senderUid];
                             item.isMine = this.user.uid === item.senderUid;
+                            if (item.isMine) {
+                                item.user = {
+                                    uid: this.user.uid,
+                                    name: this.user.name,
+                                    avatar: this.user.avatar
+                                };
+                            } else {
+                                item.user = {
+                                    uid: senderUid,
+                                    name: historyItem.name,
+                                    avatar: historyItem.avatar
+                                };
+                            }
                             item.msgContent = this.createContent(
                                 item.msgContent
                             );
@@ -793,8 +820,8 @@ export default {
                         this.chatMsgListHandleLoading = false;
                         this.chatMsgListHandleMoreText = "";
                     });
-            } else if (item.type === 2) {
-                this.chatMsgListGroupQuery.groupId = item.id;
+            } else if (historyItem.type === 2) {
+                this.chatMsgListGroupQuery.groupId = historyItem.id;
                 userGroupMsgLists(this.apiBaseUrl, this.chatMsgListGroupQuery)
                     .then(response => {
                         this.chatMsgListGroupQuery.page += 1;
@@ -1169,6 +1196,37 @@ export default {
                     let historyMsgList = Object.assign({}, this.historyMsgList);
                     delete historyMsgList[2 + "-" + item.groupId];
                     this.historyMsgList = historyMsgList;
+                })
+                .catch(() => {});
+        },
+        isShowGroupUserListClick() {
+            this.chatMsgGroupUserVisible = !this.chatMsgGroupUserVisible;
+            if (
+                !this.chatMsgGroupUserVisible ||
+                Object.keys(this.chatMsgGroupUserList).length > 0
+            ) {
+                return false;
+            }
+            let query = {
+                groupId: this.historyMsgListSelected.id,
+                page: 1,
+                limit: 500
+            };
+            userGroupLists(this.apiBaseUrl, query)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let data = response.data;
+                    let chatMsgGroupUserList = Object.assign(
+                        {},
+                        this.chatMsgGroupUserList
+                    );
+                    for (let item of data) {
+                        chatMsgGroupUserList[item.user.uid] = item;
+                    }
+                    this.chatMsgGroupUserList = chatMsgGroupUserList;
                 })
                 .catch(() => {});
         },
@@ -2151,20 +2209,25 @@ input {
 }
 .im-chat-user-info {
     display: inline-block;
-    height: 100%;
     margin-left: 10px;
     vertical-align: middle;
 }
 .im-chat-user-name {
     display: inline-block;
-    width: 100%;
+    max-width: 160px;
     /*margin-top: 5px;*/
     font-size: 14px;
     @include text-overflow;
 }
+.im-chat-user-list-button {
+    display: inline-block;
+    overflow: hidden;
+    margin-left: 10px;
+    color: #999;
+}
 .im-chat-user-remark {
     display: block;
-    width: 200px;
+    max-width: 200px;
     /*margin-top: 7px;*/
     font-size: 13px;
     color: #999;
@@ -2394,6 +2457,36 @@ input {
     background-color: #5fb878;
     color: #fff;
     border-radius: 3px;
+}
+.im-chat-user-list {
+    position: absolute;
+    top: 80px;
+    height: 200px;
+    width: 100%;
+    z-index: 4;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border: 1px solid #D9D9D9;
+    background-color: rgba(255,255,255,.9);
+    .im-chat-user-list-item {
+        display: inline-block;
+        width: 20%;
+        height: 70px;
+        text-align: center;
+        margin: 15px 0;
+        cursor: pointer;
+        img {
+            width: 48px;
+            height: 48px;
+            border-radius: 100%;
+        }
+        cite {
+            display: block;
+            padding: 0 3px;
+            color: #428bca;
+            @include text-overflow;
+        }
+    }
 }
 @media screen and (max-width: 768px) {
     .im-box {
