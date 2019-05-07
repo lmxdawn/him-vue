@@ -197,13 +197,21 @@
             </main>
 
             <footer class="im-panel-footer">
-                底部
+                <div class="im-panel-theme" @click="themeVisible = !themeVisible">
+                    <img src="./image/theme.png" alt="更换主题">
+                </div>
+                <div class="im-panel-theme-list" v-if="themeVisible">
+                    <div class="im-panel-theme-item" v-for="(item, index) in themeList" :key="index" @click="changeTheme(index, true)">
+                        <div v-if="item['background-image']" :style="item"></div>
+                        <div v-else></div>
+                    </div>
+                </div>
             </footer>
 
         </div>
 
         <!--聊天界面-->
-        <div class="im-chat-box" v-show="chatVisible" :style="{top: chatMsgListPositionX, left: chatMsgListPositionY}" ref="imChatBox">
+        <div class="im-chat-box" v-show="chatVisible" :style="imChatBoxStyle" ref="imChatBox">
 
             <div class="group-qrcode-box" v-if="groupQRCodeVisible" @click="groupQRCodeCloseHandle">
                 <div class="group-qrcode">
@@ -402,6 +410,54 @@ export default {
     },
     data() {
         return {
+            themeList: [
+                {
+                    "background-image":
+                        "url(" + require("./image/bg-1.jpg") + ")",
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                },
+                {
+                    "background-image":
+                        "url(" + require("./image/bg-2.jpg") + ")",
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                },
+                {
+                    "background-image":
+                        "url(" + require("./image/bg-3.jpg") + ")",
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                },
+                {
+                    "background-image":
+                        "url(" + require("./image/bg-4.jpg") + ")",
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                },
+                {
+                    "background-image":
+                        "url(" + require("./image/bg-5.jpg") + ")",
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                },
+                {
+                    "background-repeat": "no-repeat",
+                    "background-size": "cover",
+                    "background-color": "#f6f6f6"
+                }
+            ],
+            themeSelected: {
+                "background-repeat": "no-repeat",
+                "background-size": "cover",
+                "background-color": "#f6f6f6"
+            },
+            themeVisible: false,
             imTabList: [
                 {
                     index: 0,
@@ -579,6 +635,7 @@ export default {
         };
     },
     methods: {
+        // 设置cookie
         setCookie(name, value, expiredays) {
             var exdate = new Date();
             exdate.setDate(exdate.getDate() + expiredays);
@@ -588,8 +645,32 @@ export default {
                 escape(value) +
                 (expiredays == null ? "" : ";expires=" + exdate.toGMTString());
         },
+        setLocalStorage(name, value) {
+            localStorage.setItem(name, value);
+        },
+        getLocalStorage(name) {
+            return localStorage.getItem(name);
+        },
+        // 点击切换主题
+        changeTheme(index, isLocalStorage) {
+            // 判断是否存在下标
+            if (
+                index < 0 ||
+                this.themeList.length === 0 ||
+                index >= this.themeList.length
+            ) {
+                return false;
+            }
+            this.themeSelected = this.themeList[index];
+            if (isLocalStorage === true) {
+                this.setLocalStorage("themSelectedIndex", index);
+            }
+        },
         // 初始化界面
         init() {
+            // 初始化主题背景
+            let themSelectedIndex = this.getLocalStorage("themSelectedIndex");
+            this.changeTheme(themSelectedIndex, false);
             // 初始化用户信息
             this.userInit();
             // 初始化 WebSocket
@@ -1643,6 +1724,19 @@ export default {
             if (this.imBoxPositionY && this.isShow) {
                 data.left = this.imBoxPositionY;
             }
+            data = {
+                ...data,
+                ...this.themeSelected
+            };
+            return data;
+        },
+        imChatBoxStyle () {
+            let data = {};
+            data = {
+                top: this.chatMsgListPositionX,
+                left: this.chatMsgListPositionY,
+                ...this.themeSelected
+            };
             return data;
         }
     },
@@ -1725,10 +1819,6 @@ input {
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
-    background-image: url("../../assets/image/bg-5.jpg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-color: #f6f6f6;
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 .im-move {
@@ -2119,8 +2209,47 @@ input {
     background-color: #f6f6f6;
     height: 30px;
     line-height: 30px;
-    text-align: center;
+    padding-left: 10px;
+    padding-right: 10px;
     font-size: 12px;
+    .im-panel-theme {
+        display: inline-block;
+        width: 25px;
+        height: 25px;
+        vertical-align: middle;
+        cursor: pointer;
+        img {
+            width: 100%;
+            height: 100%;
+        }
+    }
+    .im-panel-theme-list {
+        position: absolute;
+        bottom: 30px;
+        left: 0;
+        width: 100%;
+        height: 140px;
+        border-top: 1px solid #d9d9d9;
+        background-color: #ffffff;
+        padding-top: 10px;
+        padding-left: 10px;
+    }
+    .im-panel-theme-item {
+        padding-bottom: 10px;
+        padding-right: 10px;
+        display: inline-block;
+        width: 33.33%;
+        height: 50%;
+        line-height: 50%;
+        text-align: center;
+        cursor: pointer;
+        div {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            background-color: #ccc;
+        }
+    }
 }
 .im-chat-box {
     position: fixed;
@@ -2132,10 +2261,6 @@ input {
     z-index: 100;
     border-radius: 2px;
     border: 1px solid #D9D9D9;
-    background-image: url("../../assets/image/bg-5.jpg");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-color: #fbfbfb;
 }
 .im-chat-move {
     position: absolute;
@@ -2475,6 +2600,12 @@ input {
         text-align: center;
         margin: 15px 0;
         cursor: pointer;
+        &:hover {
+            opacity: 0.9
+        }
+        &:hover cite{
+            text-decoration: underline;
+        }
         img {
             width: 48px;
             height: 48px;
@@ -2484,6 +2615,7 @@ input {
             display: block;
             padding: 0 3px;
             color: #428bca;
+            font-style: normal;
             @include text-overflow;
         }
     }
