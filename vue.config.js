@@ -18,5 +18,8 @@ module.exports = {
             args[0].template = process.env.template;
             return args;
         });
+    },
+    devServer: {
+        disableHostCheck: true
     }
 };
