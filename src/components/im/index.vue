@@ -684,8 +684,6 @@ export default {
             this.changeTheme(themSelectedIndex, false);
             // 初始化用户信息
             this.userInit();
-            // 初始化 WebSocket
-            this.webSocketInit();
             // 打开通知, try 一下, 因为一些浏览器不兼容, 会报错
             try {
                 var Notification =
@@ -988,6 +986,9 @@ export default {
                     this.getUserFriendList(1, this.userFriendListLimit);
                     // 递归拉取群列表
                     this.getUserGroupList(1, this.userGroupListLimit);
+
+                    // 初始化 WebSocket
+                    this.webSocketInit();
                 })
                 .catch(() => {});
         },
