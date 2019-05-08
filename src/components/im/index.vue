@@ -330,30 +330,35 @@
 
 <script>
 // @ is an alias to /src
-var QRCode = require("qrcode");
+import Cookies from "js-cookie";
+import protoRoot from "../../proto/proto";
 import { userLoginInfo, userQRCheckCode } from "./api/userIndex";
 import { userFriendLists } from "./api/userFriend";
 import {
-    userFriendMsgLists,
+    userFriendMsgClearUnMsgCount,
     userFriendMsgCreate,
-    userFriendMsgClearUnMsgCount
+    userFriendMsgLists
 } from "./api/userFriendMsg";
 import {
-    userFriendAskLists,
-    userFriendAskCreate,
     userFriendAskAck,
-    userFriendAskClearFriendAskCount
+    userFriendAskClearFriendAskCount,
+    userFriendAskCreate,
+    userFriendAskLists
 } from "./api/userFriendAsk";
-import { userGroupLists, userGroupCreate } from "./api/userGroup";
+import { userGroupCreate, userGroupLists } from "./api/userGroup";
 import {
-    userGroupUserLists,
-    userGroupUserCreate,
-    userGroupUserUpdate,
-    userGroupUserDelete,
     userGroupUserCheckCode,
-    userGroupUserClearUnMsgCount
+    userGroupUserClearUnMsgCount,
+    userGroupUserCreate,
+    userGroupUserDelete,
+    userGroupUserLists,
+    userGroupUserUpdate
 } from "./api/userGroupUser";
-import { userGroupMsgLists, userGroupMsgCreate } from "./api/userGroupMsg";
+import { userGroupMsgCreate, userGroupMsgLists } from "./api/userGroupMsg";
+
+let QRCode = require("qrcode");
+const WSMessageReqProto = protoRoot.lookup("protocol.WSMessageReqProto");
+const WSMessageResProto = protoRoot.lookup("protocol.WSMessageResProto");
 export default {
     name: "Im",
     props: {
@@ -631,19 +636,25 @@ export default {
             webSocketReconnectCount: 0,
             webSocketWarningText:
                 "连接断开,正在尝试重连 <i class='dotting'></i>",
-            webSocketIsOpen: false
+            webSocketIsOpen: false,
+            // 心跳定时器
+            webSocketPingTimer: null,
+            webSocketPingTime: 10000 // 心跳的间隔，当前为 10秒
         };
     },
     methods: {
-        // 设置cookie
-        setCookie(name, value, expiredays) {
-            var exdate = new Date();
-            exdate.setDate(exdate.getDate() + expiredays);
-            document.cookie =
-                name +
-                "=" +
-                escape(value) +
-                (expiredays == null ? "" : ";expires=" + exdate.toGMTString());
+        // 设置 登录用户ID
+        setUid(value) {
+            Cookies.set("UID", value, { expires: 365 });
+        },
+        getUid() {
+            return Cookies.get("UID");
+        },
+        setSid(value) {
+            Cookies.set("SID", value, { expires: 365 });
+        },
+        getSid() {
+            return Cookies.get("SID");
         },
         setLocalStorage(name, value) {
             localStorage.setItem(name, value);
@@ -674,7 +685,7 @@ export default {
             // 初始化用户信息
             this.userInit();
             // 初始化 WebSocket
-            // this.webSocketInit();
+            this.webSocketInit();
             // 打开通知, try 一下, 因为一些浏览器不兼容, 会报错
             try {
                 var Notification =
@@ -1346,6 +1357,31 @@ export default {
             map[key] = data;
             this.historyMsgList = map;
         },
+        // 断开连接时
+        webSocketClose() {
+            // 修改状态为未连接
+            this.webSocketIsOpen = false;
+            // 清除心跳定时器
+            if (this.webSocketPingTimer) {
+                clearTimeout(this.webSocketPingTimer);
+                this.webSocketPingTimer = null;
+            }
+            if (this.webSocketReconnectCount === 0) {
+                // 第一次直接尝试重连
+                this.webSocketReconnect();
+            }
+        },
+        // 定时心跳
+        webSocketPing() {
+            if (!this.webSocketIsOpen) {
+                return false;
+            }
+            const payload = {
+                type: 0
+            };
+            console.log("心跳");
+            this.webSocketSend(payload);
+        },
         // 初始化 WebSocket
         webSocketInit() {
             this.webSocket = new WebSocket(this.webSocketUrl);
@@ -1381,31 +1417,57 @@ export default {
             this.webSocketIsOpen = true;
             // 清空重连的次数
             this.webSocketReconnectCount = 0;
+            // 开启定时心跳
+            this.webSocketPingTimer = setTimeout(
+                this.webSocketPing,
+                this.webSocketPingTime
+            );
         },
         // WebSocket 关闭
         webSocketHandleClose() {
-            this.webSocketIsOpen = false;
-            if (this.webSocketReconnectCount === 0) {
-                // 第一次直接尝试重连
-                this.webSocketReconnect();
-            }
+            // 关闭心跳
+            this.webSocketClose();
         },
         // WebSocket 发生错误时
         webSocketHandleError() {
-            this.webSocketIsOpen = false;
+            // 关闭心跳
+            this.webSocketClose();
         },
         // 接收到消息时
-        webSocketHandleMessage(e) {
-            let data = this.webSocketDecode(e.data);
-            if (data.userId === this.chatUser.userId) {
-                // this.receiveMessage(data);
-            } else {
-                this.notification(data);
-            }
+        webSocketHandleMessage(event) {
+            // 响应体的message
+            const data = event.data;
+            this.protobufDecode(data, response => {
+                console.log(response, "接收到服务端回应1");
+            });
         },
         // 发送消息
-        webSocketSend(data) {
-            this.webSocket.send(this.webSocketEncode(data));
+        webSocketSend(payload) {
+            let buffer = this.protobufEncode(payload);
+            this.webSocket.send(buffer);
+        },
+        // 编码
+        protobufEncode(payload) {
+            // 加入登录验证
+            payload.uid = parseInt(this.getUid());
+            payload.sid = this.getSid();
+            console.log("发送的信息：");
+            let errMsg = WSMessageReqProto.verify(payload);
+            console.log("buff 解析错误信息：", errMsg);
+            // Create a new message
+            const wsData = WSMessageReqProto.create(payload); // or use .fromObject if conversion is necessary
+            // Encode a message to an Uint8Array (browser) or Buffer (node)
+            return WSMessageReqProto.encode(wsData).finish();
+        },
+        // 解码
+        protobufDecode(data, cb) {
+            let reader = new FileReader();
+            reader.readAsArrayBuffer(data);
+            reader.onload = () => {
+                const buf = new Uint8Array(reader.result);
+                const response = WSMessageResProto.decode(buf);
+                cb(response);
+            };
         },
         // 发送按钮点击
         sendBtnClick() {
