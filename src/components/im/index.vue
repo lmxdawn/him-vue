@@ -666,15 +666,19 @@ export default {
         changeTheme(index, isLocalStorage) {
             // 判断是否存在下标
             if (
+                index === null ||
                 index < 0 ||
                 this.themeList.length === 0 ||
                 index >= this.themeList.length
             ) {
                 return false;
             }
-            this.themeSelected = this.themeList[index];
-            if (isLocalStorage === true) {
-                this.setLocalStorage("themSelectedIndex", index);
+            let themeSelected = this.themeList[index];
+            if (!themeSelected) {
+                this.themeSelected = themeSelected;
+                if (isLocalStorage === true) {
+                    this.setLocalStorage("themSelectedIndex", index);
+                }
             }
         },
         // 初始化界面
@@ -1795,6 +1799,7 @@ export default {
         },
         imChatBoxStyle () {
             let data = {};
+            console.log(this.themeSelected);
             data = {
                 top: this.chatMsgListPositionX,
                 left: this.chatMsgListPositionY,
