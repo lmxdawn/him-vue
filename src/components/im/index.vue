@@ -613,6 +613,7 @@ export default {
             emojiVisible: false,
             chatUser: {},
             chatTextFocus: false,
+            chatCount: 0, // 当前窗口收到的消息总量
             chatText: "",
             chatMsgListPositionX: null,
             chatMsgListPositionY: null,
@@ -809,17 +810,6 @@ export default {
             // 触发a的单击事件
             a.dispatchEvent(event);
         },
-        // 保存所有用户信息
-        pushUserList(uid, name, avatar, remake) {
-            let map = Object.assign({}, this.userList);
-            map[uid] = {
-                uid: uid,
-                name: name,
-                avatar: avatar,
-                remake: remake
-            };
-            this.userList = map;
-        },
         // 去换Tab
         imTabSelectedHandle(index) {
             let data = [];
@@ -834,18 +824,21 @@ export default {
             }
             this.imTabList = data;
         },
+        msgClearUnMsgCount(type, id) {
+            if (type === 1) {
+                // 清空未读消息数量
+                let query = {
+                    receiverUid: id
+                };
+                userFriendMsgClearUnMsgCount(this.apiBaseUrl, query);
+            } else if (type === 2) {
+                userGroupUserClearUnMsgCount(this.apiBaseUrl, id);
+            }
+        },
         // 打开聊天界面
         handleChat(item) {
             if (item.unMsgCount > 0) {
-                if (item.type === 1) {
-                    // 清空未读消息数量
-                    let query = {
-                        receiverUid: item.id
-                    };
-                    userFriendMsgClearUnMsgCount(this.apiBaseUrl, query);
-                } else if (item.type) {
-                    userGroupUserClearUnMsgCount(this.apiBaseUrl, item.id);
-                }
+                this.msgClearUnMsgCount(item.type, item.id);
                 item.unMsgCount = 0;
             }
             this.chatVisible = true;
@@ -870,6 +863,7 @@ export default {
             this.chatMsgListHandleLoading = true;
             this.chatMsgListHandleMoreText = "加载中";
             let historyItem = this.historyMsgListSelected;
+            let isLoad = true; // 是否是加载更多
             // 如果是好友类型
             if (historyItem.type === 1) {
                 let senderUid = historyItem.id;
@@ -888,25 +882,29 @@ export default {
                             return false;
                         }
                         for (let item of list) {
-                            item.isMine = this.user.uid === item.senderUid;
-                            if (item.isMine) {
-                                item.user = {
+                            let isMine = this.user.uid === item.senderUid;
+                            let user = {};
+                            if (isMine) {
+                                user = {
                                     uid: this.user.uid,
                                     name: this.user.name,
                                     avatar: this.user.avatar
                                 };
                             } else {
-                                item.user = {
+                                user = {
                                     uid: senderUid,
                                     name: historyItem.name,
                                     avatar: historyItem.avatar
                                 };
                             }
-                            item.msgContent = this.createContent(
-                                item.msgContent
+                            // 追加到消息列表
+                            this.pushChatMsgList(
+                                item.msgType,
+                                item.msgContent,
+                                user,
+                                item.createTime,
+                                isLoad
                             );
-                            item.createTime = this.formatDate(item.createTime);
-                            this.chatMsgList.unshift(item);
                         }
                         this.chatMsgListHandleMoreText = "加载更多消息";
                     })
@@ -930,12 +928,14 @@ export default {
                             return false;
                         }
                         for (let item of list) {
-                            item.isMine = this.user.uid === item.senderUid;
-                            item.msgContent = this.createContent(
-                                item.msgContent
+                            // 追加到消息列表
+                            this.pushChatMsgList(
+                                item.msgType,
+                                item.msgContent,
+                                item.user,
+                                item.createTime,
+                                isLoad
                             );
-                            item.createTime = this.formatDate(item.createTime);
-                            this.chatMsgList.unshift(item);
                         }
                         this.chatMsgListHandleMoreText = "加载更多消息";
                     })
@@ -952,8 +952,17 @@ export default {
         },
         // 关闭
         closeChat() {
+            let selectedType = this.historyMsgListSelected.type || 0;
+            let id = this.historyMsgListSelected.id || 0;
             this.historyMsgListSelected = {};
+            this.chatMsgList = [];
             this.chatVisible = false;
+            // 如果有当前窗口有未读消息，清除一下未读消息
+            if (this.chatCount > 0) {
+                this.chatCount = 0;
+                // 清空消息
+                this.msgClearUnMsgCount(selectedType, id);
+            }
         },
         // emoji 表情
         handleEmoji() {
@@ -972,13 +981,6 @@ export default {
                     }
                     let data = response.data;
                     this.user = data;
-                    // 添加到用户信息
-                    this.pushUserList(
-                        data.uid,
-                        data.name,
-                        data.avatar,
-                        data.remake
-                    );
                     // 调用外部方法
                     if (
                         this.loginInitHandle &&
@@ -1026,13 +1028,6 @@ export default {
                                 item.modifiedTime
                             );
                         }
-                        // 添加到用户信息列表
-                        this.pushUserList(
-                            item.user.uid,
-                            item.user.name,
-                            item.user.avatar,
-                            item.user.remake
-                        );
                         userFriendList[item.friendUid] = item;
                     }
                     this.userFriendList = userFriendList;
@@ -1089,13 +1084,6 @@ export default {
                     }
                     item.status = status;
                     let userFriendList = Object.assign({}, this.userFriendList);
-                    // 添加到用户信息列表
-                    this.pushUserList(
-                        item.user.uid,
-                        item.user.name,
-                        item.user.avatar,
-                        item.user.remake
-                    );
                     userFriendList[item.friendUid] = item;
                     this.userFriendList = userFriendList;
                     // 追加到历史消息
@@ -1341,6 +1329,7 @@ export default {
             let key = type + "-" + id;
             let map = Object.assign({}, this.historyMsgList);
             let item = map[key];
+            console.log(item, key, "历史消息");
             if (item) {
                 item.lastMsgContent = lastMsgContent;
                 item.unMsgCount += unMsgCount;
@@ -1362,13 +1351,31 @@ export default {
             map[key] = data;
             this.historyMsgList = map;
         },
+        // 追加消息到当前聊天 {isLoad：是否加载更多}
+        pushChatMsgList(msgType, msgContent, user, createTime, isLoad) {
+            msgContent = this.createContent(msgContent);
+            createTime = this.formatDate(createTime);
+            let item = {};
+            item.isMine = this.user.uid === user.uid;
+            item.user = user;
+            item.msgType = msgType;
+            item.msgContent = msgContent;
+            item.createTime = createTime;
+            // 加载更多，向头部增加
+            if (isLoad) {
+                this.chatMsgList.unshift(item);
+            } else {
+                // 头部尾部增加
+                this.chatMsgList.push(item);
+            }
+        },
         // 断开连接时
         webSocketClose() {
             // 修改状态为未连接
             this.webSocketIsOpen = false;
             // 清除心跳定时器
             if (this.webSocketPingTimer) {
-                clearTimeout(this.webSocketPingTimer);
+                clearInterval(this.webSocketPingTimer);
                 this.webSocketPingTimer = null;
             }
             if (this.webSocketReconnectCount === 0) {
@@ -1378,13 +1385,13 @@ export default {
         },
         // 定时心跳
         webSocketPing() {
+            console.log("心跳");
             if (!this.webSocketIsOpen) {
                 return false;
             }
             const payload = {
                 type: 0
             };
-            console.log("心跳");
             this.webSocketSend(payload);
         },
         // 初始化 WebSocket
@@ -1423,7 +1430,7 @@ export default {
             // 清空重连的次数
             this.webSocketReconnectCount = 0;
             // 开启定时心跳
-            this.webSocketPingTimer = setTimeout(
+            this.webSocketPingTimer = setInterval(
                 this.webSocketPing,
                 this.webSocketPingTime
             );
@@ -1443,11 +1450,139 @@ export default {
             // 响应体的message
             const data = event.data;
             this.protobufDecode(data, response => {
-                console.log(response.message, 11);
-                console.log(response.message.type, 22);
-                console.log(new Date(response.createTime), 33);
-                console.log(response, "接收到服务端回应1");
+                let type = response.type || 0;
+                switch (type) {
+                    case 1: // 好友消息
+                    case 2: // 群消息
+                        this.wsMsgHandle(response);
+                        break;
+                    case 3: // 好友请求
+                        this.wsFriendAskHandle();
+                        break;
+                    case 4: // 好友同意消息
+                        this.wsFriendAckHandle();
+                        break;
+                    case 5: // 加入群消息
+                        this.wsFriendAckHandle();
+                        break;
+                }
             });
+        },
+        // 好友请求
+        wsFriendAskHandle() {
+            this.user.profile.friendAskCount += 1;
+        },
+        // 好友同意消息
+        wsFriendAckHandle(response) {
+            let message = response.message;
+            let user = response.user;
+            let createTime = new Date(response.createTime);
+            let receiveId = message.receiveId || 0;
+            let uid = user.uid || 0;
+            let msgContent = message.msgContent || "";
+            if (
+                !receiveId ||
+                typeof receiveId !== "number" ||
+                receiveId === 0 ||
+                !msgContent ||
+                msgContent === "" ||
+                typeof uid !== "number" ||
+                uid === 0
+            ) {
+                return false;
+            }
+            let userFriendList = Object.assign({}, this.userFriendList);
+            userFriendList[uid] = user;
+            this.userFriendList = userFriendList;
+            let historyType = 1; // 好友
+            let unMsgCount = 1;
+            // 追加到历史消息
+            this.pushHistoryMsg(
+                historyType,
+                uid,
+                user.name,
+                user.remark,
+                user.avatar,
+                msgContent,
+                unMsgCount,
+                createTime
+            );
+        },
+        // 消息类型的消息（好友消息/群消息）
+        wsMsgHandle(response) {
+            let type = response.type;
+            let message = response.message;
+            let user = response.user;
+            let createTime = new Date(response.createTime);
+            let receiveId = message.receiveId || 0;
+            let uid = user.uid || 0;
+            let msgType = message.msgType || 0;
+            let msgContent = message.msgContent || "";
+            if (
+                !receiveId ||
+                typeof receiveId !== "number" ||
+                receiveId === 0 ||
+                !msgContent ||
+                msgContent === "" ||
+                typeof uid !== "number" ||
+                uid === 0
+            ) {
+                return false;
+            }
+
+            let name = user.name;
+            let remark = user.remark;
+            let avatar = user.avatar;
+            // 判断是不是打开的这个对象
+            let selectedType = this.historyMsgListSelected.type || 0;
+            let id = this.historyMsgListSelected.id || 0;
+            let unMsgCount = 1;
+            // 判断是不是聊天窗口的消息
+            if (selectedType === type && id === uid) {
+                let user = {
+                    uid: uid,
+                    name: name,
+                    avatar: avatar
+                };
+                this.pushChatMsgList(msgType, msgContent, user, createTime);
+                unMsgCount = 0;
+                // 如果超过 5 个消息，则做一次 ACK 消息的操作
+                this.chatCount += 1;
+                if (this.chatCount >= 5) {
+                    this.chatCount = 0;
+                    // 清空消息
+                    this.msgClearUnMsgCount(type, id);
+                }
+                // 假如是 好友入群消息
+                if (type === 5) {
+                    let chatMsgGroupUserList = Object.assign(
+                        {},
+                        this.chatMsgGroupUserList
+                    );
+                    chatMsgGroupUserList[user.uid] = user;
+                    this.chatMsgGroupUserList = chatMsgGroupUserList;
+                }
+            }
+            // 没有在聊天窗口，更新历史消息列表的数据
+            // 如果是群消息， 获取群消息
+            if (type === 2) {
+                let groupItem = this.userGroupList[uid];
+                name = groupItem.name;
+                remark = groupItem.remark;
+                avatar = groupItem.avatar;
+            }
+            // 如果是好友入群，则把类型改为 2
+            type = type === 5 ? 2 : type;
+            this.pushHistoryMsg(
+                type,
+                uid,
+                name,
+                remark,
+                avatar,
+                msgContent,
+                unMsgCount,
+                createTime
+            );
         },
         // 发送消息
         webSocketSend(payload) {
@@ -1610,7 +1745,7 @@ export default {
             let year = date.getFullYear();
             let month = date.getMonth();
             month = month < 10 ? "0" + month : month;
-            let day = date.getDay();
+            let day = date.getDate();
             day = day < 10 ? "0" + day : day;
             let hour = date.getHours();
             hour = hour < 10 ? "0" + hour : hour;
@@ -1802,7 +1937,6 @@ export default {
         },
         imChatBoxStyle () {
             let data = {};
-            console.log(this.themeSelected);
             data = {
                 top: this.chatMsgListPositionX,
                 left: this.chatMsgListPositionY,
