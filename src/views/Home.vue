@@ -11,6 +11,8 @@
                 :webSocketUrl="webSocketUrl"
                 :userQRCodeUrl="userQRCodeUrl"
                 :groupQRCodeUrl="groupQRCodeUrl"
+                :WSResEncode="WSResEncode"
+                :WSResDecode="WSResDecode"
                 :downClick="downClick"
                 :loginInitHandle="loginInitHandle"
                 :requestErrHandle="requestErrHandle"></im>
@@ -23,7 +25,13 @@
 </template>
 
 <script>
+// protobuf 编码
+import protoRoot from "@/proto/proto";
 import Im from "../components/im/index";
+
+const WSBaseReqProto = protoRoot.lookup("protocol.WSBaseReqProto");
+const WSBaseResProto = protoRoot.lookup("protocol.WSBaseResProto");
+
 export default {
     name: "home",
 
@@ -42,6 +50,25 @@ export default {
         Im
     },
     methods: {
+        // WebSocket 编码
+        WSResEncode(payload) {
+            let errMsg = WSBaseReqProto.verify(payload);
+            console.log("buff 解析错误信息：", errMsg);
+            // Create a new message
+            const wsData = WSBaseReqProto.create(payload);
+            // Encode a message to an Uint8Array (browser) or Buffer (node)
+            return WSBaseReqProto.encode(wsData).finish();
+        },
+        // WebSocket 编码
+        WSResDecode(data, cb) {
+            let reader = new FileReader();
+            reader.readAsArrayBuffer(data);
+            reader.onload = () => {
+                const buf = new Uint8Array(reader.result);
+                const response = WSBaseResProto.decode(buf);
+                cb(response);
+            };
+        },
         downClick() {
             this.isShow = !this.isShow;
         },

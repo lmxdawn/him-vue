@@ -331,7 +331,6 @@
 <script>
 // @ is an alias to /src
 import Cookies from "js-cookie";
-import protoRoot from "../../proto/proto";
 import { userLoginInfo, userQRCheckCode } from "./api/userIndex";
 import { userFriendLists } from "./api/userFriend";
 import {
@@ -357,8 +356,6 @@ import {
 import { userGroupMsgCreate, userGroupMsgLists } from "./api/userGroupMsg";
 
 let QRCode = require("qrcode");
-const WSBaseReqProto = protoRoot.lookup("protocol.WSBaseReqProto");
-const WSBaseResProto = protoRoot.lookup("protocol.WSBaseResProto");
 export default {
     name: "Im",
     props: {
@@ -393,14 +390,14 @@ export default {
             default: 5
         },
         // WebSocket 编码
-        webSocketEncode: {
+        WSResEncode: {
             type: Function,
             default: function(data) {
                 return JSON.stringify(data);
             }
         },
         // WebSocket 编码
-        webSocketDecode: {
+        WSResDecode: {
             type: Function,
             default: function(data) {
                 return JSON.parse(data);
@@ -1449,7 +1446,7 @@ export default {
         webSocketHandleMessage(event) {
             // 响应体的message
             const data = event.data;
-            this.protobufDecode(data, response => {
+            this.WSResDecode(data, response => {
                 let type = response.type || 0;
                 switch (type) {
                     case 1: // 好友消息
@@ -1586,31 +1583,11 @@ export default {
         },
         // 发送消息
         webSocketSend(payload) {
-            let buffer = this.protobufEncode(payload);
-            this.webSocket.send(buffer);
-        },
-        // 编码
-        protobufEncode(payload) {
             // 加入登录验证
             payload.uid = parseInt(this.getUid());
             payload.sid = this.getSid();
-            console.log("发送的信息：");
-            let errMsg = WSBaseReqProto.verify(payload);
-            console.log("buff 解析错误信息：", errMsg);
-            // Create a new message
-            const wsData = WSBaseReqProto.create(payload); // or use .fromObject if conversion is necessary
-            // Encode a message to an Uint8Array (browser) or Buffer (node)
-            return WSBaseReqProto.encode(wsData).finish();
-        },
-        // 解码
-        protobufDecode(data, cb) {
-            let reader = new FileReader();
-            reader.readAsArrayBuffer(data);
-            reader.onload = () => {
-                const buf = new Uint8Array(reader.result);
-                const response = WSBaseResProto.decode(buf);
-                cb(response);
-            };
+            let buffer = this.WSResEncode(payload);
+            this.webSocket.send(buffer);
         },
         // 发送按钮点击
         sendBtnClick() {
