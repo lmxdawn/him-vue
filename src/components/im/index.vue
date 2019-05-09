@@ -1373,11 +1373,6 @@ export default {
         webSocketClose() {
             // 修改状态为未连接
             this.webSocketIsOpen = false;
-            // 清除心跳定时器
-            if (this.webSocketPingTimer) {
-                clearInterval(this.webSocketPingTimer);
-                this.webSocketPingTimer = null;
-            }
             if (this.webSocketReconnectCount === 0) {
                 // 第一次直接尝试重连
                 this.webSocketReconnect();
@@ -1385,14 +1380,19 @@ export default {
         },
         // 定时心跳
         webSocketPing() {
-            console.log("心跳");
-            if (!this.webSocketIsOpen) {
-                return false;
-            }
-            const payload = {
-                type: 0
-            };
-            this.webSocketSend(payload);
+            this.webSocketPingTimer = setTimeout(() => {
+                if (!this.webSocketIsOpen) {
+                    return false;
+                }
+                console.log("心跳");
+                const payload = {
+                    type: 0
+                };
+                this.webSocketSend(payload);
+                clearTimeout(this.webSocketPingTimer);
+                // 重新执行
+                this.webSocketPing();
+            }, this.webSocketPingTime);
         },
         // 初始化 WebSocket
         webSocketInit() {
@@ -1426,22 +1426,22 @@ export default {
         },
         // WebSocket 打开成功后
         webSocketHandleOpen() {
+            console.log("连接打开");
             this.webSocketIsOpen = true;
             // 清空重连的次数
             this.webSocketReconnectCount = 0;
             // 开启定时心跳
-            this.webSocketPingTimer = setInterval(
-                this.webSocketPing,
-                this.webSocketPingTime
-            );
+            this.webSocketPing();
         },
         // WebSocket 关闭
         webSocketHandleClose() {
+            console.log("连接断开");
             // 关闭心跳
             this.webSocketClose();
         },
         // WebSocket 发生错误时
-        webSocketHandleError() {
+        webSocketHandleError(err) {
+            console.log("连接报错：", err);
             // 关闭心跳
             this.webSocketClose();
         },
