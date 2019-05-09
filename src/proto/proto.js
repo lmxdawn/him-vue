@@ -11,27 +11,7 @@ var $root = ($protobuf.roots["default"] || ($protobuf.roots["default"] = new $pr
       java_package: "com.lmxdawn.him.common.protobuf"
     },
     nested: {
-      WSMessageProto: {
-        fields: {
-          senderId: {
-            type: "uint64",
-            id: 1
-          },
-          receiveId: {
-            type: "uint64",
-            id: 2
-          },
-          msgType: {
-            type: "int32",
-            id: 3
-          },
-          msgContent: {
-            type: "string",
-            id: 4
-          }
-        }
-      },
-      WSMessageReqProto: {
+      WSBaseReqProto: {
         fields: {
           type: {
             type: "int32",
@@ -47,19 +27,59 @@ var $root = ($protobuf.roots["default"] || ($protobuf.roots["default"] = new $pr
           }
         }
       },
-      WSMessageResProto: {
+      WSBaseResProto: {
         fields: {
           type: {
             type: "int32",
             id: 1
           },
           message: {
-            type: "WSMessageProto",
+            type: "WSMessageResProto",
             id: 2
+          },
+          user: {
+            type: "WSUserResProto",
+            id: 3
           },
           createTime: {
             type: "string",
+            id: 4
+          }
+        }
+      },
+      WSMessageResProto: {
+        fields: {
+          receiveId: {
+            type: "uint64",
+            id: 1
+          },
+          msgType: {
+            type: "int32",
+            id: 2
+          },
+          msgContent: {
+            type: "string",
             id: 3
+          }
+        }
+      },
+      WSUserResProto: {
+        fields: {
+          uid: {
+            type: "uint64",
+            id: 1
+          },
+          name: {
+            type: "string",
+            id: 2
+          },
+          avatar: {
+            type: "string",
+            id: 3
+          },
+          remark: {
+            type: "string",
+            id: 4
           }
         }
       }

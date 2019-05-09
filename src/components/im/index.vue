@@ -357,8 +357,8 @@ import {
 import { userGroupMsgCreate, userGroupMsgLists } from "./api/userGroupMsg";
 
 let QRCode = require("qrcode");
-const WSMessageReqProto = protoRoot.lookup("protocol.WSMessageReqProto");
-const WSMessageResProto = protoRoot.lookup("protocol.WSMessageResProto");
+const WSBaseReqProto = protoRoot.lookup("protocol.WSBaseReqProto");
+const WSBaseResProto = protoRoot.lookup("protocol.WSBaseResProto");
 export default {
     name: "Im",
     props: {
@@ -1443,6 +1443,9 @@ export default {
             // 响应体的message
             const data = event.data;
             this.protobufDecode(data, response => {
+                console.log(response.message, 11);
+                console.log(response.message.type, 22);
+                console.log(new Date(response.createTime), 33);
                 console.log(response, "接收到服务端回应1");
             });
         },
@@ -1457,12 +1460,12 @@ export default {
             payload.uid = parseInt(this.getUid());
             payload.sid = this.getSid();
             console.log("发送的信息：");
-            let errMsg = WSMessageReqProto.verify(payload);
+            let errMsg = WSBaseReqProto.verify(payload);
             console.log("buff 解析错误信息：", errMsg);
             // Create a new message
-            const wsData = WSMessageReqProto.create(payload); // or use .fromObject if conversion is necessary
+            const wsData = WSBaseReqProto.create(payload); // or use .fromObject if conversion is necessary
             // Encode a message to an Uint8Array (browser) or Buffer (node)
-            return WSMessageReqProto.encode(wsData).finish();
+            return WSBaseReqProto.encode(wsData).finish();
         },
         // 解码
         protobufDecode(data, cb) {
@@ -1470,7 +1473,7 @@ export default {
             reader.readAsArrayBuffer(data);
             reader.onload = () => {
                 const buf = new Uint8Array(reader.result);
-                const response = WSMessageResProto.decode(buf);
+                const response = WSBaseResProto.decode(buf);
                 cb(response);
             };
         },
