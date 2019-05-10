@@ -44,7 +44,7 @@ export default {
             isShow: true,
             qqRedirectUri: "http://localhost:8080",
             qqLoginUrl:
-                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=11&redirect_uri=" +
+                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101578922&redirect_uri=" +
                 encodeURIComponent(this.qqRedirectUri) +
                 "&state=1",
             userCheckCode: null,
