@@ -11,9 +11,11 @@
                 :webSocketUrl="webSocketUrl"
                 :userQRCodeUrl="userQRCodeUrl"
                 :groupQRCodeUrl="groupQRCodeUrl"
+                :qqLoginUrl="qqLoginUrl"
                 :WSResEncode="WSResEncode"
                 :WSResDecode="WSResDecode"
                 :downClick="downClick"
+                :qqLoginClick="qqLoginClick"
                 :loginInitHandle="loginInitHandle"
                 :requestErrHandle="requestErrHandle">
 
@@ -40,6 +42,11 @@ export default {
     data() {
         return {
             isShow: true,
+            qqRedirectUri: "http://localhost:8080",
+            qqLoginUrl:
+                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=11&redirect_uri=" +
+                encodeURIComponent(this.qqRedirectUri) +
+                "&state=1",
             userCheckCode: null,
             groupCheckCode: null,
             apiBaseUrl: process.env.VUE_APP_API_BASE,
@@ -70,6 +77,10 @@ export default {
                 const response = WSBaseResProto.decode(buf);
                 cb(response);
             };
+        },
+        // 点击了QQ登录
+        qqLoginClick() {
+            // 前去授权
         },
         downClick() {
             this.isShow = !this.isShow;
@@ -105,6 +116,11 @@ export default {
         // 获取get参数
         this.userCheckCode = this.getQueryVariable("userCheckCode");
         this.groupCheckCode = this.getQueryVariable("groupCheckCode");
+        // 授权成功后的跳转
+        this.code = this.getQueryVariable("code"); // QQ 登录的code码
+        if (this.code) {
+            this.$refs["him"].qqLogin(this.code, this.qqRedirectUri);
+        }
     }
 };
 </script>

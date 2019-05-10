@@ -14,6 +14,15 @@
                     <div class="user-qrcode-download" @click.stop="downloadImg(userQRCodeImg)">保存二维码</div>
                 </div>
             </div>
+
+            <div class="user-login-box" v-if="!user.uid">
+                <div class="user-login-list">
+                   <a class="user-login-button" :href="qqLoginUrl">
+                       <img src="./image/login-qq.png" alt="QQ登录">
+                       <span>QQ登录</span>
+                   </a>
+                </div>
+            </div>
             
             <header class="im-panel-header">
                 <div class="im-header-user">
@@ -220,6 +229,15 @@
                 </div>
             </div>
 
+            <div class="user-login-box" v-if="!user.uid">
+                <div class="user-login-list">
+                    <a class="user-login-button" :href="qqLoginUrl">
+                        <img src="./image/login-qq.png" alt="QQ登录">
+                        <span>QQ登录</span>
+                    </a>
+                </div>
+            </div>
+
             <header class="im-chat-header">
                 <div class="im-chat-move" @mousedown="moveChatMsg"></div>
                 <div class="im-chat-user">
@@ -333,6 +351,7 @@
 import Cookies from "js-cookie";
 import { userLoginInfo, userQRCheckCode } from "./api/userIndex";
 import { userFriendLists } from "./api/userFriend";
+import { userLoginByQq } from "./api/userLogin";
 import {
     userFriendMsgClearUnMsgCount,
     userFriendMsgCreate,
@@ -379,6 +398,7 @@ export default {
         webSocketUrl: String,
         userQRCodeUrl: String, // 用户二维码的生成地址
         groupQRCodeUrl: String, // 群二维码的生成地址
+        qqLoginUrl: String, // QQ 登录的url
         // 是否自动初始化
         isAutoInit: {
             type: Boolean,
@@ -405,6 +425,8 @@ export default {
         },
         // 点击了关闭按钮
         downClick: Function,
+        // 点击了 QQ 登录
+        qqLoginClick: Function,
         // 登录初始化完成
         loginInitHandle: Function,
         // 请求错误处理
@@ -486,7 +508,8 @@ export default {
             clientWidth: null,
             clientHeight: null,
             user: {
-                profile: {}
+                profile: {},
+                sid: null
             },
             imBoxPositionX: null,
             imBoxPositionY: null,
@@ -679,6 +702,24 @@ export default {
                 }
             }
         },
+        // QQ 登录
+        qqLogin(code, redirectUri) {
+            if (this.user) {
+                return false;
+            }
+            userLoginByQq(code, redirectUri)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let data = response.data;
+                    // 设置登录信息
+                    this.setUid(data.uid);
+                    this.setSid(data.sid);
+                })
+                .catch(() => {});
+        },
         // 初始化界面
         init() {
             // 初始化主题背景
@@ -710,6 +751,11 @@ export default {
         },
         // 请求错误处理
         requestErr(code, message) {
+            // 登录失效的
+            if (code === 2) {
+                this.setUid("");
+                this.setSid("");
+            }
             // 调用外部方法
             if (
                 this.requestErrHandle &&
@@ -1584,8 +1630,8 @@ export default {
         // 发送消息
         webSocketSend(payload) {
             // 加入登录验证
-            payload.uid = parseInt(this.getUid());
-            payload.sid = this.getSid();
+            payload.uid = parseInt(this.user.uid);
+            payload.sid = this.user.sid;
             let buffer = this.WSResEncode(payload);
             this.webSocket.send(buffer);
         },
@@ -2127,6 +2173,35 @@ input {
         height: 50px;
         line-height: 50px;
         text-align: center;
+    }
+}
+.user-login-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 999;
+    .user-login-list {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+    }
+    .user-login-button {
+        display: inline-block;
+        cursor: pointer;
+        text-align: center;
+        img {
+            width: 50px;
+            height: 50px;
+        }
+        span {
+            display: block;
+            color: #ffffff;
+        }
     }
 }
 .group-qrcode-box {
