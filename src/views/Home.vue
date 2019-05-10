@@ -40,12 +40,13 @@ export default {
     name: "home",
 
     data() {
+        const qqRedirectUri = "http://him-vue.await.fun/index";
         return {
             isShow: true,
-            qqRedirectUri: "http://him-vue.await.fun/index",
+            qqRedirectUri: qqRedirectUri,
             qqLoginUrl:
                 "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101578922&redirect_uri=" +
-                encodeURIComponent(this.qqRedirectUri) +
+                encodeURIComponent(qqRedirectUri) +
                 "&state=1",
             userCheckCode: null,
             groupCheckCode: null,
