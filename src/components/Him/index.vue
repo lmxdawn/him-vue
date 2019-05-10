@@ -357,7 +357,7 @@ import { userGroupMsgCreate, userGroupMsgLists } from "./api/userGroupMsg";
 
 let QRCode = require("qrcode");
 export default {
-    name: "Im",
+    name: "Him",
     props: {
         isShow: {
             type: Boolean,
