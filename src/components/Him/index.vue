@@ -1016,6 +1016,9 @@ export default {
             this.chatTextFocus = true;
         },
         userInit() {
+            if (!this.getUid() || !this.getSid()) {
+                return false;
+            }
             userLoginInfo(this.apiBaseUrl, {})
                 .then(response => {
                     if (response.code !== 0) {
