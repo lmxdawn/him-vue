@@ -42,7 +42,7 @@ export default {
     data() {
         return {
             isShow: true,
-            qqRedirectUri: "http://localhost:8080",
+            qqRedirectUri: "http://him-vue.await.fun/index",
             qqLoginUrl:
                 "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101578922&redirect_uri=" +
                 encodeURIComponent(this.qqRedirectUri) +
