@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="view-box">
-            <im ref="him"
+            <him ref="him"
                 :isShow="isShow"
                 width="350px"
                 height="650px"
@@ -15,7 +15,9 @@
                 :WSResDecode="WSResDecode"
                 :downClick="downClick"
                 :loginInitHandle="loginInitHandle"
-                :requestErrHandle="requestErrHandle"></im>
+                :requestErrHandle="requestErrHandle">
+
+            </him>
         </div>
         <div class="btn-ok" @click="downClick" v-if="!isShow">
             <i class="icon"></i>
@@ -27,7 +29,7 @@
 <script>
 // protobuf 编码
 import protoRoot from "@/proto/proto";
-import Im from "../components/im/index";
+import Him from "../components/Him/index";
 
 const WSBaseReqProto = protoRoot.lookup("protocol.WSBaseReqProto");
 const WSBaseResProto = protoRoot.lookup("protocol.WSBaseResProto");
@@ -47,7 +49,7 @@ export default {
         };
     },
     components: {
-        Im
+        Him
     },
     methods: {
         // WebSocket 编码
