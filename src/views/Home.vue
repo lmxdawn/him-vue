@@ -1,5 +1,5 @@
 <template>
-    <div style="overflow: hidden">
+    <div>
 
         <div class="text">
             <h1 class="title">一篇文章引发的 ❄️ <span style="color: red;">️案</span></h1>
@@ -8,17 +8,16 @@
                 <h3 style="margin-top: 10px;"><a target="_blank" href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></h3>
                 <div style="color: #99a9bf">注: 你会发现这个网站是适配手机端和PC端的</div>
                 <h1 style="color: red;">从此无法自拔</h1>
-                <div style="color: #d3dce6">于是有了下面的故事</div>
-                <h4>开源的H5聊天系统 </h4>
-                <h4><span style="color: rgb(0, 82, 255)">( 画外音: 本人是开源爱好者 )</span> </h4>
-                <h1 style="color: red;">点击右下角按钮开始你的聊天之旅吧~</h1>
+                <div style="color: #99a9bf">于是有了下面的故事</div>
+                <h3>开源的H5聊天系统 </h3>
+                <h5><span style="color: rgb(0, 82, 255)">( 画外音: 本人是开源爱好者 )</span> </h5>
+                <h1 style="color: red;">点击右下角 ﹤我们开始聊天吧~﹥ </h1>
                 <div style="margin-top: 10px;">
                     GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
                 </div>
 
-                <h4 style="margin-top: 10px; color: green">
-
-                    操作流程
+                <h3 style="margin-top: 20px;">操作流程</h3>
+                <h4 style="color: green">
                     <br/>
                     点击右下方的我们聊天吧
                     <br/>
@@ -217,11 +216,21 @@ export default {
             if (userCheckCode) {
                 // 发送加好友的请求
                 this.$refs["him"].createUserFriendAsk(userCheckCode);
+                // 发送后删除
+                this.delUserCheckCode();
+                this.$router.push("/");
             }
             // 如果有加群的验证码
             if (groupCheckCode) {
                 this.$refs["him"].joinGroupUser(groupCheckCode);
+                // 发送后删除
+                this.delGroupCheckCode();
+                this.$router.push("/");
             }
+            // 登录成功, 延时显示聊天界面
+            setTimeout(() => {
+                this.isShow = true;
+            }, 1000);
         },
         requestErrHandle(code, message) {
             alert(code + "-" + message);
@@ -243,11 +252,17 @@ export default {
         getUserCheckCode() {
             return Cookies.get("USER_CHECK_CODE");
         },
+        delUserCheckCode() {
+            return Cookies.remove("USER_CHECK_CODE");
+        },
         setGroupCheckCode(value) {
             Cookies.set("GROUP_CHECK_CODE", value, { expires: 1 });
         },
         getGroupCheckCode() {
             return Cookies.get("GROUP_CHECK_CODE");
+        },
+        delGroupCheckCode() {
+            return Cookies.remove("GROUP_CHECK_CODE");
         }
     },
     mounted() {
@@ -273,10 +288,10 @@ export default {
         // 判断是否和 Cookie 里面的值相同
         if (
             groupCheckCode &&
-            userCheckCode !== "" &&
+            groupCheckCode !== "" &&
             groupCheckCode !== this.getGroupCheckCode()
         ) {
-            this.setGroupCheckCode(userCheckCode);
+            this.setGroupCheckCode(groupCheckCode);
         }
     }
 };

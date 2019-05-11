@@ -15,7 +15,7 @@
                 </div>
             </div>
 
-            <div class="user-login-box" v-if="!user.uid">
+            <div class="user-login-box" v-if="!user.uid" @click="isShowClick">
                 <div class="user-login-list">
                    <a class="user-login-button" :href="qqLoginUrl">
                        <img src="./image/login-qq.png" alt="QQ登录">
@@ -1309,7 +1309,7 @@ export default {
                         item.group.remark,
                         item.group.avatar,
                         item.lastMsgContent,
-                        item.unMsgCount,
+                        1,
                         item.lastMsgTime
                     );
                     userGroupList[item.groupId] = item;
@@ -1493,6 +1493,11 @@ export default {
             this.webSocketIsOpen = true;
             // 清空重连的次数
             this.webSocketReconnectCount = 0;
+            // 发送登录信息
+            const payload = {
+                type: 0
+            };
+            this.webSocketSend(payload);
             // 开启定时心跳
             this.webSocketPing();
         },
@@ -1513,19 +1518,20 @@ export default {
             // 响应体的message
             const data = event.data;
             this.WSResDecode(data, response => {
+                console.log("服务端消息:", response);
                 let type = response.type || 0;
                 switch (type) {
                     case 1: // 好友消息
+                        this.wsFriendMsgHandle(response);
+                        break;
                     case 2: // 群消息
-                        this.wsMsgHandle(response);
+                    case 5: // 加入群消息
+                        this.wsGroupMsgHandle(response);
                         break;
                     case 3: // 好友请求
                         this.wsFriendAskHandle();
                         break;
                     case 4: // 好友同意消息
-                        this.wsFriendAckHandle(response);
-                        break;
-                    case 5: // 加入群消息
                         this.wsFriendAckHandle(response);
                         break;
                 }
@@ -1571,8 +1577,8 @@ export default {
                 createTime
             );
         },
-        // 消息类型的消息（好友消息/群消息）
-        wsMsgHandle(response) {
+        // 消息类型的消息（好友消息）
+        wsFriendMsgHandle(response) {
             let type = response.type;
             let message = response.message;
             let user = response.user;
@@ -1581,6 +1587,7 @@ export default {
             let uid = user.uid || 0;
             let msgType = message.msgType || 0;
             let msgContent = message.msgContent || "";
+            console.log("好友消息", receiveId, msgContent, uid);
             if (
                 !receiveId ||
                 typeof receiveId !== "number" ||
@@ -1592,7 +1599,6 @@ export default {
             ) {
                 return false;
             }
-
             let name = user.name;
             let remark = user.remark;
             let avatar = user.avatar;
@@ -1600,8 +1606,9 @@ export default {
             let selectedType = this.historyMsgListSelected.type || 0;
             let id = this.historyMsgListSelected.id || 0;
             let unMsgCount = 1;
+            let historyType = 1;
             // 判断是不是聊天窗口的消息
-            if (selectedType === type && id === uid) {
+            if (selectedType === historyType && id === uid) {
                 let user = {
                     uid: uid,
                     name: name,
@@ -1614,10 +1621,73 @@ export default {
                 if (this.chatCount >= 5) {
                     this.chatCount = 0;
                     // 清空消息
-                    this.msgClearUnMsgCount(type, id);
+                    this.msgClearUnMsgCount(historyType, id);
                 }
-                // 假如是 好友入群消息
-                if (type === 5) {
+            }
+            this.pushHistoryMsg(
+                historyType,
+                uid,
+                name,
+                remark,
+                avatar,
+                msgContent,
+                unMsgCount,
+                createTime
+            );
+        },
+        // 消息类型的消息（群消息）
+        wsGroupMsgHandle(response) {
+            let type = response.type;
+            let message = response.message;
+            let user = response.user;
+            let createTime = new Date(response.createTime);
+            let receiveId = message.receiveId || 0;
+            let uid = user.uid || 0;
+            let msgType = message.msgType || 0;
+            let msgContent = message.msgContent || "";
+            console.log("群消息", receiveId, msgContent, uid);
+            if (
+                !receiveId ||
+                typeof receiveId !== "number" ||
+                receiveId === 0 ||
+                !msgContent ||
+                msgContent === "" ||
+                typeof uid !== "number" ||
+                uid === 0
+            ) {
+                return false;
+            }
+            // 如果是入群消息, 则改变
+            let isJoinGroup = false;
+            if (type === 5) {
+                isJoinGroup = true;
+            }
+            let name = user.name;
+            let remark = user.remark;
+            let avatar = user.avatar;
+            // 判断是不是打开的这个对象
+            let selectedType = this.historyMsgListSelected.type || 0;
+            let id = this.historyMsgListSelected.id || 0;
+            let unMsgCount = 1;
+            let historyType = 2;
+            // 判断是不是聊天窗口的消息
+            if (selectedType === historyType && id === receiveId) {
+                let user = {
+                    uid: uid,
+                    name: name,
+                    avatar: avatar
+                };
+                this.pushChatMsgList(msgType, msgContent, user, createTime);
+                unMsgCount = 0;
+                // 如果超过 5 个消息，则做一次 ACK 消息的操作
+                this.chatCount += 1;
+                if (this.chatCount >= 5) {
+                    this.chatCount = 0;
+                    // 清空消息
+                    this.msgClearUnMsgCount(historyType, id);
+                }
+                // 入群消息
+                if (isJoinGroup) {
                     let chatMsgGroupUserList = Object.assign(
                         {},
                         this.chatMsgGroupUserList
@@ -1626,19 +1696,16 @@ export default {
                     this.chatMsgGroupUserList = chatMsgGroupUserList;
                 }
             }
-            // 没有在聊天窗口，更新历史消息列表的数据
             // 如果是群消息， 获取群消息
             if (type === 2) {
-                let groupItem = this.userGroupList[uid];
-                name = groupItem.name;
-                remark = groupItem.remark;
-                avatar = groupItem.avatar;
+                let groupItem = this.userGroupList[receiveId];
+                name = groupItem ? groupItem.name : "gd" + receiveId;
+                remark = groupItem ? groupItem.remark : "";
+                avatar = groupItem ? groupItem.avatar : "";
             }
-            // 如果是好友入群，则把类型改为 2
-            type = type === 5 ? 2 : type;
             this.pushHistoryMsg(
-                type,
-                uid,
+                historyType,
+                receiveId,
                 name,
                 remark,
                 avatar,
@@ -1657,7 +1724,11 @@ export default {
         },
         // 发送按钮点击
         sendBtnClick() {
-            if (this.chatText.replace(/(^s*)|(s*$)/g, "").length === 0) {
+            if (
+                !this.chatText ||
+                this.chatText === "" ||
+                /^[ ]+$/.test(this.chatText)
+            ) {
                 return false;
             }
             let item = this.historyMsgListSelected;
@@ -1689,7 +1760,9 @@ export default {
                         this.chatText = "";
                     })
                     .catch(() => {});
-            } else if (item.type === 2) {
+                return false;
+            }
+            if (item.type === 2) {
                 let postData = {
                     groupId: item.id,
                     msgType: msgType,
@@ -1715,6 +1788,7 @@ export default {
                         this.chatText = "";
                     })
                     .catch(() => {});
+                return false;
             }
         },
         receiveMessage(
