@@ -78,7 +78,7 @@
 
                 <ul class="im-panel-user-list">
 
-                    <template v-for="(item) in historyMsgList">
+                    <template v-for="(item) in sortHistoryMsgList">
                         <li @click="handleChat(item)" :key="item.type + item.id">
                             <div class="im-user-left">
                                 <img :src="item.avatar | getDefaultAvatar" alt="" class="im-user-avatar">
@@ -332,7 +332,7 @@
                     </div>
                 </div>
                 <div class="im-chat-text-holder">
-                    <textarea placeholder="请输入" v-model="chatText" v-focus="chatTextFocus"></textarea>
+                    <textarea placeholder="请输入" ref="himChatText" v-model="chatText"></textarea>
                 </div>
                 <div class="im-chat-send-box">
                     <div class="im-chat-send">
@@ -906,6 +906,10 @@ export default {
             this.chatMsgListFriendQuery.page = 1;
             this.chatMsgListGroupQuery.page = 1;
             this.chatMsgGroupUserList = {};
+            // 默认选中, 需要延时等挂载好
+            setTimeout(() => {
+                this.$refs.himChatText.select();
+            }, 100);
             // 追加
             this.getChatMsgList();
         },
@@ -1396,7 +1400,7 @@ export default {
             if (item) {
                 item.lastMsgContent = lastMsgContent;
                 item.unMsgCount += unMsgCount;
-                item.modifiedTime += modifiedTime;
+                item.modifiedTime = modifiedTime;
                 map[key] = item;
                 this.historyMsgList = map;
                 return false;
@@ -1481,10 +1485,10 @@ export default {
             // 初始化
             this.webSocketInit();
 
-            const _this = this;
             // 每过 5 秒尝试一次，检查是否连接成功，直到超过最大重连次数
-            setTimeout(function() {
-                _this.webSocketReconnect();
+            let timer = setTimeout(() => {
+                this.webSocketReconnect();
+                clearTimeout(timer);
             }, 5000);
         },
         // WebSocket 打开成功后
@@ -2059,6 +2063,21 @@ export default {
                 ...this.themeSelected
             };
             return data;
+        },
+        sortHistoryMsgList: function () {
+            let historyMsgList = {};
+            Object.keys(this.historyMsgList)
+                .sort((a, b) => {
+                    let aItem = this.historyMsgList[a];
+                    let bItem = this.historyMsgList[b];
+                    let aModifiedTime = new Date(aItem.modifiedTime);
+                    let bModifiedTime = new Date(bItem.modifiedTime);
+                    return bModifiedTime - aModifiedTime;
+                })
+                .map((v) => {
+                    historyMsgList[v] = this.historyMsgList[v];
+                });
+            return historyMsgList;
         }
     },
     watch: {
