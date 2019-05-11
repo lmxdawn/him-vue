@@ -4,15 +4,37 @@
         <div class="text">
             <h1 class="title">一篇文章引发的 ❄️ <span style="color: red;">️案</span></h1>
             <div class="content">
-                一次读公众号推文时, 发现一篇文章写得特好, 勾起了我强烈的好奇心, 于是有了下面的故事
-                <div style="color: red;">你会发现这个网站是适配手机端和PC端的</div>
+                一次读公号推文, 发现一篇文章写得特好, 勾起了好奇心
+                <h3 style="margin-top: 10px;"><a target="_blank" href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></h3>
+                <div style="color: #99a9bf">注: 你会发现这个网站是适配手机端和PC端的</div>
                 <h1 style="color: red;">从此无法自拔</h1>
-                <div style="margin-top: 10px;"><a href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></div>
-                <h1>开源的H5聊天系统</h1>
+                <div style="color: #d3dce6">于是有了下面的故事</div>
+                <h4>开源的H5聊天系统 </h4>
+                <h4><span style="color: rgb(0, 82, 255)">( 画外音: 本人是开源爱好者 )</span> </h4>
                 <h1 style="color: red;">点击右下角按钮开始你的聊天之旅吧~</h1>
                 <div style="margin-top: 10px;">
                     GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
                 </div>
+
+                <h4 style="margin-top: 10px; color: green">
+
+                    操作流程
+                    <br/>
+                    点击右下方的我们聊天吧
+                    <br/>
+                    <span style="font-size: 20px;">↓</span>
+                    <br/>
+                    QQ登录
+                    <br/>
+                    <span style="font-size: 20px;">↓</span>
+                    <br/>
+                    点击右上方的 二维码按钮, 生成二维码
+                    <br/>
+                    <span style="font-size: 20px;">↓</span>
+                    <br/>
+                    把生成好的二维码发给好友
+
+                </h4>
 
             </div>
 
@@ -21,66 +43,78 @@
             <div class="img-list">
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG6.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG6.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG6.jpeg'/>
                 </div>
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG7.jpeg'/>
-                </div>
-
-
-                <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG8.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG7.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG7.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG9.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG8.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG8.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG10.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG9.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG9.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG11.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG10.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG10.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG12.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG11.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG11.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG13.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG12.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG12.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG14.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG13.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG13.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG15.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG14.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG14.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG16.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG15.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG15.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG17.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG16.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG16.jpeg'/>
                 </div>
 
 
                 <div class="img-list-item">
-                    <img src='http://kan.027cgb.com/621479/him/WechatIMG18.jpeg'/>
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG17.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG17.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG18.jpeg'/>
                 </div>
 
             </div>

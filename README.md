@@ -101,6 +101,14 @@ location /ws
 |  isAutoInit |   是否自动初始化（如果为 false 需要执行） | boolean |  —   |  true  | 
 |  webSocketReconnectMaxCount |   尝试重新连接的最大次数 |number|  —   |  5 | 
 
+# 图床说明
+
+> 把图片放入 git 版本控制里, 上传到 GitHub 上, 然后 在 GitHub 里打开这个图片 把里面的 blob 改为 raw
+
+> 例如: https://github.com/lmxdawn/him-vue/blob/master/pic/WechatIMG10.jpeg 改为 https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG10.jpeg
+
+> 我这里直接用的 七牛云的, 因为怕 GitHub 的访问太慢
+
 # protobuf 杂谈
  
 > 说明： 目前所有文件都生成好了，不需要在生成，下面简单说明下
