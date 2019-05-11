@@ -13,7 +13,7 @@
                 <h4><span style="color: rgb(0, 82, 255)">( 画外音: 本人是开源爱好者 )</span> </h4>
                 <h1 style="color: red;">点击右下角按钮开始你的聊天之旅吧~</h1>
                 <div style="margin-top: 10px;">
-                    GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+                    GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
                 </div>
 
                 <h4 style="margin-top: 10px; color: green">

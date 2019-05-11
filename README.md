@@ -57,6 +57,11 @@
 
 注意默认使用 QQ登录, 这个需要去申请QQ互联, 如果不想去申请, 则可以直接设置 Cookie, 两个值 UID 和 SID, 这两个值可以通过接口 /api/user/login/byPwd 获取, 具体请看java 代码
 
+# 示例
+
+<img src="http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG14.jpeg"  />
+
+
 # QQ 互联相关配置
 
 ### java 代码
