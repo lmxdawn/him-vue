@@ -1579,7 +1579,6 @@ export default {
         },
         // 消息类型的消息（好友消息）
         wsFriendMsgHandle(response) {
-            let type = response.type;
             let message = response.message;
             let user = response.user;
             let createTime = new Date(response.createTime);
