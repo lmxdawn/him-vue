@@ -671,11 +671,17 @@ export default {
         getUid() {
             return Cookies.get("UID");
         },
+        delUid() {
+            return Cookies.remove("UID");
+        },
         setSid(value) {
             Cookies.set("SID", value, { expires: 365 });
         },
         getSid() {
             return Cookies.get("SID");
+        },
+        delSid() {
+            return Cookies.remove("SID");
         },
         setLocalStorage(name, value) {
             localStorage.setItem(name, value);
@@ -695,7 +701,7 @@ export default {
                 return false;
             }
             let themeSelected = this.themeList[index];
-            if (!themeSelected) {
+            if (themeSelected) {
                 this.themeSelected = themeSelected;
                 if (isLocalStorage === true) {
                     this.setLocalStorage("themSelectedIndex", index);
@@ -704,10 +710,16 @@ export default {
         },
         // QQ 登录
         qqLogin(code, redirectUri) {
-            if (this.user) {
+            if (
+                this.getUid() === "undefined" &&
+                this.getSid() === "undefined"
+            ) {
                 return false;
             }
-            userLoginByQq(code, redirectUri)
+            if (this.user.sid) {
+                return false;
+            }
+            userLoginByQq(this.apiBaseUrl, code, redirectUri)
                 .then(response => {
                     if (response.code !== 0) {
                         this.requestErr(response.code, response.message);
@@ -717,6 +729,8 @@ export default {
                     // 设置登录信息
                     this.setUid(data.uid);
                     this.setSid(data.sid);
+                    // 登录成功, 重新初始化
+                    this.init();
                 })
                 .catch(() => {});
         },
@@ -752,9 +766,9 @@ export default {
         // 请求错误处理
         requestErr(code, message) {
             // 登录失效的
-            if (code === 2) {
-                this.setUid("");
-                this.setSid("");
+            if (code === 1) {
+                this.delUid();
+                this.delSid();
             }
             // 调用外部方法
             if (
@@ -882,7 +896,8 @@ export default {
         handleChat(item) {
             if (item.unMsgCount > 0) {
                 this.msgClearUnMsgCount(item.type, item.id);
-                item.unMsgCount = 0;
+                let key = item.type + "-" + item.id;
+                this.historyMsgList[key].unMsgCount = 0;
             }
             this.chatVisible = true;
             this.chatUser = item;
@@ -1086,12 +1101,14 @@ export default {
         },
         // 朋友列表的点击
         friendClick(item) {
+            console.log(item);
             let data = {
                 type: 1,
                 id: item.friendUid,
                 name: item.remark ? item.remark : item.user.name,
                 avatar: item.user.avatar,
-                remark: item.user.remark
+                remark: item.user.remark,
+                unMsgCount: item.unMsgCount
             };
             this.handleChat(data);
         },
@@ -1506,10 +1523,10 @@ export default {
                         this.wsFriendAskHandle();
                         break;
                     case 4: // 好友同意消息
-                        this.wsFriendAckHandle();
+                        this.wsFriendAckHandle(response);
                         break;
                     case 5: // 加入群消息
-                        this.wsFriendAckHandle();
+                        this.wsFriendAckHandle(response);
                         break;
                 }
             });
@@ -1633,8 +1650,8 @@ export default {
         // 发送消息
         webSocketSend(payload) {
             // 加入登录验证
-            payload.uid = parseInt(this.user.uid);
-            payload.sid = this.user.sid;
+            payload.uid = parseInt(this.getUid());
+            payload.sid = this.getSid();
             let buffer = this.WSResEncode(payload);
             this.webSocket.send(buffer);
         },

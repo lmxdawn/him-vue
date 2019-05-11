@@ -5,7 +5,7 @@ router.beforeEach((to, from, next) => {
     if (to.meta && to.meta.title) {
         document.title = to.meta.title;
     } else {
-        document.title = "vue 即时通讯";
+        // document.title = "我们聊天吧~";
     }
     next();
 });

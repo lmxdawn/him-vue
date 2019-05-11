@@ -6,7 +6,7 @@ import { create } from "./himAxios";
 export function userLoginByQq(apiBaseUrl, code, redirect_uri) {
     return create(apiBaseUrl)({
         url: "/api/user/login/byQq",
-        method: "get",
+        method: "post",
         params: {
             code,
             redirect_uri

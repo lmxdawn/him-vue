@@ -1,5 +1,92 @@
 <template>
-    <div>
+    <div style="overflow: hidden">
+
+        <div class="text">
+            <h1 class="title">一篇文章引发的 ❄️ <span style="color: red;">️案</span></h1>
+            <div class="content">
+                一次读公众号推文时, 发现一篇文章写得特好, 勾起了我强烈的好奇心, 于是有了下面的故事
+                <div style="color: red;">你会发现这个网站是适配手机端和PC端的</div>
+                <h1 style="color: red;">从此无法自拔</h1>
+                <div style="margin-top: 10px;"><a href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></div>
+                <h1>开源的H5聊天系统</h1>
+                <h1 style="color: red;">点击右下角按钮开始你的聊天之旅吧~</h1>
+                <div style="margin-top: 10px;">
+                    GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+                </div>
+
+            </div>
+
+            <h2 style="margin-top: 20px;">效果图</h2>
+
+            <div class="img-list">
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG6.jpeg'/>
+                </div>
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG7.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG8.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG9.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG10.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG11.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG12.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG13.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG14.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG15.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG16.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG17.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <img src='http://kan.027cgb.com/621479/him/WechatIMG18.jpeg'/>
+                </div>
+
+            </div>
+
+        </div>
+
         <div class="view-box">
             <him ref="him"
                 :isShow="isShow"
@@ -23,12 +110,13 @@
         </div>
         <div class="btn-ok" @click="downClick" v-if="!isShow">
             <i class="icon"></i>
-            <span class="text">在线沟通</span>
+            <span class="text">我们聊天吧~</span>
         </div>
     </div>
 </template>
 
 <script>
+import Cookies from "js-cookie";
 // protobuf 编码
 import protoRoot from "@/proto/proto";
 import Him from "../components/Him/index";
@@ -40,12 +128,12 @@ export default {
     name: "home",
 
     data() {
-        const qqRedirectUri = "http://him-vue.await.fun/index";
+        const qqRedirectUri = "http://him-netty.await.fun/h5";
         return {
-            isShow: true,
+            isShow: false,
             qqRedirectUri: qqRedirectUri,
             qqLoginUrl:
-                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101578922&redirect_uri=" +
+                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101579192&redirect_uri=" +
                 encodeURIComponent(qqRedirectUri) +
                 "&state=1",
             userCheckCode: null,
@@ -88,14 +176,17 @@ export default {
         },
         // 登录初始化完成
         loginInitHandle() {
+            let userCheckCode = this.getUserCheckCode();
+            let groupCheckCode = this.getGroupCheckCode();
+            console.log("登录初始化完成", userCheckCode, groupCheckCode);
             // 如果有加朋友的验证码
-            if (this.userCheckCode) {
+            if (userCheckCode) {
                 // 发送加好友的请求
-                this.$refs["him"].createUserFriendAsk(this.userCheckCode);
+                this.$refs["him"].createUserFriendAsk(userCheckCode);
             }
             // 如果有加群的验证码
-            if (this.groupCheckCode) {
-                this.$refs["him"].joinGroupUser(this.groupCheckCode);
+            if (groupCheckCode) {
+                this.$refs["him"].joinGroupUser(groupCheckCode);
             }
         },
         requestErrHandle(code, message) {
@@ -111,16 +202,47 @@ export default {
                 }
             }
             return false;
+        },
+        setUserCheckCode(value) {
+            Cookies.set("USER_CHECK_CODE", value, { expires: 1 });
+        },
+        getUserCheckCode() {
+            return Cookies.get("USER_CHECK_CODE");
+        },
+        setGroupCheckCode(value) {
+            Cookies.set("GROUP_CHECK_CODE", value, { expires: 1 });
+        },
+        getGroupCheckCode() {
+            return Cookies.get("GROUP_CHECK_CODE");
         }
     },
     mounted() {
-        // 获取get参数
-        this.userCheckCode = this.getQueryVariable("userCheckCode");
-        this.groupCheckCode = this.getQueryVariable("groupCheckCode");
         // 授权成功后的跳转
         this.code = this.getQueryVariable("code"); // QQ 登录的code码
         if (this.code) {
             this.$refs["him"].qqLogin(this.code, this.qqRedirectUri);
+            this.$router.push("/");
+        }
+    },
+    created() {
+        // 获取get参数
+        let userCheckCode = this.getQueryVariable("userCheckCode");
+        // 判断是否和 Cookie 里面的值相同
+        if (
+            userCheckCode &&
+            userCheckCode !== "" &&
+            userCheckCode !== this.getUserCheckCode()
+        ) {
+            this.setUserCheckCode(userCheckCode);
+        }
+        let groupCheckCode = this.getQueryVariable("groupCheckCode");
+        // 判断是否和 Cookie 里面的值相同
+        if (
+            groupCheckCode &&
+            userCheckCode !== "" &&
+            groupCheckCode !== this.getGroupCheckCode()
+        ) {
+            this.setGroupCheckCode(userCheckCode);
         }
     }
 };
@@ -155,6 +277,36 @@ export default {
 }
 .view-box {
     width: 100%;
-    height: 100vh;
+}
+.text {
+    margin-top: 10px;
+    text-align: center;
+    .content {
+        /*text-align: left;*/
+        margin-top: 20px;
+    }
+}
+.img-list {
+    padding-left: 80px;
+    padding-right: 80px;
+    text-align: left;
+    .img-list-item {
+        display: inline-block;
+        padding: 20px;
+        width: 50%;
+        vertical-align: top;
+        img {
+            width: 100%;
+        }
+    }
+}
+@media screen and (max-width: 768px) {
+    .img-list {
+        padding-left: 0;
+        padding-right: 0;
+        .img-list-item {
+            width: 100%;
+        }
+    }
 }
 </style>
