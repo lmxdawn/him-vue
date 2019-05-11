@@ -11,10 +11,14 @@
                 <div style="color: #99a9bf">于是有了下面的故事</div>
                 <h3>开源的H5聊天系统 </h3>
                 <h5><span style="color: rgb(0, 82, 255)">( 画外音: 本人是开源爱好者 )</span> </h5>
-                <h1 style="color: red;">点击右下角 ﹤我们开始聊天吧~﹥ </h1>
+                <h5><span>( 地址 )</span> </h5>
                 <div style="margin-top: 10px;">
-                    GitHub 地址: <iframe style="vertical-align: middle;" src="https://ghbtns.com/github-btn.html?user=lmxdawn&repo=him-vue&type=star&count=true&size=large" frameborder="0" scrolling="0" width="160px" height="30px"></iframe>
+                    <a href="https://github.com/lmxdawn/him-vue" style="margin-left: 2px;"><img src="https://img.shields.io/badge/him-him--vue-1.svg"/></a>
+                    <a href="https://github.com/lmxdawn/him-netty" style="margin-left: 2px;"><img src="https://img.shields.io/badge/him-him--netty-1.svg"/></a>
+                    <a href="https://shang.qq.com/wpa/qunwpa?idkey=d4965fc7101936dcdea5eb1d05e2eaeb3128f20796028ee937ab516652083c6c" style="margin-left: 2px;"><img src="https://img.shields.io/badge/QQ%E7%BE%A4-210277856-orange.svg"/></a>
                 </div>
+
+                <h1 style="color: red;margin-top: 5px;">点击右下角 ﹤我们开始聊天吧~﹥ </h1>
 
                 <h3 style="margin-top: 20px;">操作流程</h3>
                 <h4 style="color: green">
