@@ -59,7 +59,7 @@
 
 # 示例
 
-<img src="http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG14.jpeg"  />
+[![him-vue](http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG14.jpeg)](http://him-netty.await.fun/h5)
 
 
 # QQ 互联相关配置
