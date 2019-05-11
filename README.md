@@ -2,11 +2,9 @@
 <div align="center">
     <p align="center">
 
-   <a target="_blank" href="http://him-netty.await.fun/h5">
 
-   [![him-vue](http://prbsvykmy.bkt.clouddn.com/pic/him.jpg)]()
+   [![him-vue](http://prbsvykmy.bkt.clouddn.com/pic/him.jpg)](http://him-netty.await.fun/h5)
 
-   <a/>
 
    </p>
    <p align="center">
