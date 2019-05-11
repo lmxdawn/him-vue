@@ -151,9 +151,9 @@ location /ws
 
 ## 页面中引入
 
-> 上面的执行完成后，会在 src/proto 目录下生成 proto.js 文件，**由于 webpack 新版本的原因直接引入改文件会报错**
+> 上面的执行完成后，会在 src/proto 目录下生成 proto.js 文件，**由于 webpack 新版本的原因直接引入该文件会报错**
 > [](https://github.com/protobufjs/protobuf.js/issues/1216)[Cannot assign to read only property'exports'of object' ](https://github.com/protobufjs/protobuf.js/issues/1216 "Cannot assign to read only property'exports'of object' ")
-> 需要修改最后一行代码为：`export default $root;`
+> **需要修改最后一行代码为**：`export default $root;`
 
 ```
 import protoRoot from "@/proto/proto"
