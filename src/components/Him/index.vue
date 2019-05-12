@@ -17,10 +17,18 @@
 
             <div class="user-login-box" v-if="!user.uid" @click="isShowClick">
                 <div class="user-login-list">
-                   <a class="user-login-button" :href="qqLoginUrl">
-                       <img src="./image/login-qq.png" alt="QQ登录">
-                       <span>QQ登录</span>
+                   <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                       <img src="./image/user-2-default.png" alt="女游客登录">
+                       <span>女游客</span>
                    </a>
+                   <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                       <img src="./image/user-1-default.png" alt="男游客登录">
+                       <span>男游客</span>
+                   </a>
+                    <a class="user-login-button" :href="qqLoginUrl">
+                        <img src="./image/login-qq.png" alt="QQ登录">
+                        <span>QQ登录</span>
+                    </a>
                 </div>
             </div>
             
@@ -34,13 +42,14 @@
                     </div>
                 </div>
                 <div class="im-header-setwin">
-                    <a href="javascript:;">
-                        <div class="im-header-qrcode-box" @click="userQRCodeClick">
-                            <img src="./image/qrcode.png" alt="二维码" title="二维码" style="width: 100%; height: 100%;">
-                        </div>
-                        <i class="im-icon im-icon-ring-open"></i>
-                        <i class="im-icon im-icon-panel-down" @click="isShowClick"></i>
-                    </a>
+                    <div class="im-header-out-login" @click="userOut" title="登出">
+                        <img src="./image/out-login.png" alt="登出" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="im-header-qrcode-box" @click="userQRCodeClick">
+                        <img src="./image/qrcode.png" alt="二维码" title="二维码" style="width: 100%; height: 100%;">
+                    </div>
+                    <i class="im-icon im-icon-ring-open"></i>
+                    <i class="im-icon im-icon-panel-down" @click="isShowClick"></i>
                 </div>
             </header>
 
@@ -231,6 +240,14 @@
 
             <div class="user-login-box" v-if="!user.uid">
                 <div class="user-login-list">
+                    <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                        <img src="./image/user-2-default.png" alt="女游客登录">
+                        <span>女游客</span>
+                    </a>
+                    <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                        <img src="./image/user-1-default.png" alt="男游客登录">
+                        <span>男游客</span>
+                    </a>
                     <a class="user-login-button" :href="qqLoginUrl">
                         <img src="./image/login-qq.png" alt="QQ登录">
                         <span>QQ登录</span>
@@ -351,7 +368,7 @@
 import Cookies from "js-cookie";
 import { userLoginInfo, userQRCheckCode } from "./api/userIndex";
 import { userFriendLists } from "./api/userFriend";
-import { userLoginByQq } from "./api/userLogin";
+import { userLoginByTourist, userLoginByQq } from "./api/userLogin";
 import {
     userFriendMsgClearUnMsgCount,
     userFriendMsgCreate,
@@ -513,7 +530,6 @@ export default {
             },
             imBoxPositionX: null,
             imBoxPositionY: null,
-            userList: {},
             userFriendList: {},
             userFriendListLimit: 500, // 每次拉取多少好友
             newFriendVisible: false,
@@ -528,7 +544,6 @@ export default {
             userGroupListLimit: 500, // 群列表每次拉取
             historyMsgList: {},
             historyMsgListSelected: {}, // 历史消息的选中值
-            userGroupMap: [],
             createGroupName: "",
             createGroupVisible: false,
             chatVisible: false,
@@ -708,17 +723,45 @@ export default {
                 }
             }
         },
+        // 登出
+        userOut() {
+            this.delUid();
+            this.delSid();
+            this.user = {
+                profile: {},
+                sid: null
+            };
+            this.userFriendList = {};
+            this.newFriendList = [];
+            this.userGroupList = {};
+            this.historyMsgList = {};
+            this.historyMsgListSelected = {};
+            this.chatMsgList = [];
+            this.chatMsgGroupUserList = {};
+            this.chatCount = 0;
+        },
+        // 游客登录
+        touristLogin(sex) {
+            // 先退出
+            this.userOut();
+            userLoginByTourist(this.apiBaseUrl, sex)
+                .then(response => {
+                    if (response.code !== 0) {
+                        this.requestErr(response.code, response.message);
+                        return false;
+                    }
+                    let data = response.data;
+                    // 设置登录信息
+                    this.setUid(data.uid);
+                    this.setSid(data.sid);
+                    // 登录成功, 重新初始化
+                    this.init();
+                })
+                .catch(() => {});
+        },
         // QQ 登录
         qqLogin(code, redirectUri) {
-            if (
-                this.getUid() === "undefined" &&
-                this.getSid() === "undefined"
-            ) {
-                return false;
-            }
-            if (this.user.sid) {
-                return false;
-            }
+            this.userOut();
             userLoginByQq(this.apiBaseUrl, code, redirectUri)
                 .then(response => {
                     if (response.code !== 0) {
@@ -2255,11 +2298,17 @@ input {
             @include text-overflow;
         }
     }
-    .im-header-qrcode-box {
-        position: relative;
+    .im-header-out-login {
         display: inline-block;
         width: 22px;
         height: 22px;
+        cursor: pointer;
+    }
+    .im-header-qrcode-box {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
     }
     .im-header-setwin {
         float: right;
@@ -2301,9 +2350,14 @@ input {
         left: 50%;
         transform: translate(-50%, -50%);
         z-index: 1000;
+        display: flex;
+    }
+    .user-login-button:first-child {
+        margin-left: 0;
     }
     .user-login-button {
         display: inline-block;
+        margin-left: 20px;
         cursor: pointer;
         text-align: center;
         img {
@@ -2313,6 +2367,9 @@ input {
         span {
             display: block;
             color: #ffffff;
+        }
+        &:hover {
+            opacity: 0.7;
         }
     }
 }
