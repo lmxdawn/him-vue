@@ -27,6 +27,8 @@
 
 # him-vue
 
+> 使用前先阅读开源协议: [中文版](https://github.com/lmxdawn/him-vue/LICENSE_CN) , [English version](https://github.com/lmxdawn/him-vue/LICENSE)
+
 > 前端：vue  [前往](https://github.com/lmxdawn/him-vue) ，服务端 netty [前往](https://github.com/lmxdawn/him-netty)
 
 # 功能列表
