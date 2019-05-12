@@ -1,12 +1,8 @@
 <template>
     <div>
 
-        <div class="text">
-            <h1 class="title">
-                一篇文章引发的
-                ️<span style="color: red;">xue</span>
-                ️案
-            </h1>
+        <div class="text" :class="{'is-show': isShow}">
+            <h1 class="title" style="font-size: 18px;">一篇文章引发的<span style="color: red;">xue</span>案</h1>
             <div class="content">
                 一次读公号推文, 发现一篇文章写得特好, 勾起了好奇心
                 <h2 style="margin-top: 20px;"><a target="_blank" href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></h2>
@@ -45,6 +41,10 @@
                     <span style="font-size: 20px;">↓</span>
                     <br/>
                     这个时候等待好友确认, 就可以聊天了
+                    <br/>
+                    <span style="font-size: 20px;">↓</span>
+                    <br/>
+                    左下角 换肤图标 可以切换皮肤
 
                 </h4>
 
@@ -395,7 +395,7 @@ export default {
     }
 }
 @media screen and (max-width: 768px) {
-    .gongneng-list{
+    .gongneng-list {
         width: 80%;
     }
     .img-list {
@@ -404,6 +404,10 @@ export default {
         .img-list-item {
             width: 100%;
         }
+    }
+    /*手机端隐藏背后*/
+    .is-show {
+        display: none;
     }
 }
 </style>

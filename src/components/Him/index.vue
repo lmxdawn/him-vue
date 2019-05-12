@@ -11,7 +11,7 @@
             <div class="user-qrcode-box" v-if="userQRCodeVisible" @click="userQRCodeCloseHandle">
                 <div class="user-qrcode">
                     <img :src="userQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(userQRCodeImg)">
-                    <div class="user-qrcode-download" @click.stop="downloadImg(userQRCodeImg)">保存二维码</div>
+                    <div class="user-qrcode-download" @click.stop="downloadImg(userQRCodeImg)">点击/长按保存二维码</div>
                 </div>
             </div>
 
@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="im-header-setwin">
-                    <div class="im-header-out-login" @click="userOut" title="登出">
+                    <div class="im-header-out-login" @click="userOutClick" title="登出">
                         <img src="./image/out-login.png" alt="登出" style="width: 100%; height: 100%;">
                     </div>
                     <div class="im-header-qrcode-box" @click="userQRCodeClick">
@@ -242,7 +242,7 @@
             <div class="group-qrcode-box" v-if="groupQRCodeVisible" @click="groupQRCodeCloseHandle">
                 <div class="group-qrcode">
                     <img :src="groupQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(groupQRCodeImg)">
-                    <div class="group-qrcode-download" @click.stop="downloadImg(groupQRCodeImg)">保存二维码</div>
+                    <div class="group-qrcode-download" @click.stop="downloadImg(groupQRCodeImg)">点击/长按保存二维码</div>
                 </div>
             </div>
 
@@ -286,7 +286,7 @@
                     </div>
                     <i class="im-icon im-icon-close" @click="closeChat"></i>
                 </div>
-                <div class="im-chat-warning" v-if="webSocketIsOpen" v-html="webSocketWarningText"></div>
+                <div class="im-chat-warning" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
             </header>
 
             <nav style="display: none;">
@@ -1503,7 +1503,10 @@ export default {
             this.webSocketIsOpen = false;
             this.webSocket = null;
             // 判断是否重连
-            if (this.webSocketIsReconnect && this.webSocketReconnectCount === 0) {
+            if (
+                this.webSocketIsReconnect &&
+                this.webSocketReconnectCount === 0
+            ) {
                 // 第一次直接尝试重连
                 this.webSocketReconnect();
             }
@@ -1617,6 +1620,7 @@ export default {
             // 修改重连状态
             this.webSocketIsReconnect = false;
             if (this.webSocket) {
+                console.log("关闭websocket");
                 // 关闭 websocket
                 this.webSocket.close();
             }
@@ -1797,7 +1801,7 @@ export default {
                 createTime
             );
         },
-        // 发送消息
+        // 发送ws消息
         webSocketSend(payload) {
             // 加入登录验证
             payload.uid = parseInt(this.getUid());
@@ -1874,6 +1878,7 @@ export default {
                 return false;
             }
         },
+        // 接收消息的追加
         receiveMessage(
             type,
             id,
@@ -1925,6 +1930,7 @@ export default {
                 createTime
             );
         },
+        // 格式化文本消息, 这里主要做表情的筛选
         createContent(text) {
             if (typeof text === "string") {
                 text = this.htmlSpecialChars(text);
@@ -1940,6 +1946,7 @@ export default {
             }
             return text;
         },
+        // 日期的格式化
         formatDate(dateStr) {
             let date = new Date(dateStr);
             let year = date.getFullYear();
@@ -1963,43 +1970,22 @@ export default {
             str = str.replace(/'/g, "&#039;");
             return str;
         },
-        notification(item) {
-
-            let isUser = false;
-            this.userGroupList.forEach(function (user) {
-                 if (user.gid === item.gid) {
-                     isUser = true;
-                     user.lastContent = item.content;
-                     user.unMsgCount += item.unMsgCount > 0 ? parseInt(item.unMsgCount) : 1;
-                 }
-            });
-            if (!isUser) {
-                let user = {
-                    gid: item.gid,
-                    userId: item.userId,
-                    userName: item.userName,
-                    avatar: item.avatar,
-                    lastContent: item.content,
-                    unMsgCount: 1
-                };
-                this.userGroupList.unshift(user);
-            }
-
+        // 弹出浏览器通知
+        notification(id, title, content, icon) {
             var Notification =
                 window.Notification ||
                 window.mozNotification ||
                 window.webkitNotification;
             // 判断浏览器是否支持桌面通知
             if (Notification && Notification.permission === "granted") {
-                var notification = new Notification(item.userName, {
-                    body: item.content,
-                    icon: item.avatar
+                let notification = new Notification(title, {
+                    body: content,
+                    icon: icon
                 });
-                const _this = this;
-                notification.onclick = function() {
-                    _this.handleChat(item);
+                notification.onclick = (() => {
+                    // 点击了通知消息
                     notification.close();
-                };
+                });
             }
         },
         // 主面板的移动
@@ -2170,6 +2156,11 @@ export default {
                 }
             });
         }
+    },
+    // 组件销毁时触发
+    destroyed() {
+        // 关闭 websocket 链接
+        this.wsOut();
     }
 };
 </script>
@@ -2383,6 +2374,7 @@ input {
         height: 50px;
         line-height: 50px;
         text-align: center;
+        color: #fff;
     }
 }
 .user-login-box {
@@ -2442,6 +2434,7 @@ input {
         height: 50px;
         line-height: 50px;
         text-align: center;
+        color: #fff;
     }
 }
 .im-tab-nav {
