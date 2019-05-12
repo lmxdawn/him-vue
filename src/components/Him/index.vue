@@ -21,7 +21,7 @@
                        <img src="./image/user-2-default.png" alt="女游客登录">
                        <span>女游客</span>
                    </a>
-                   <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                   <a class="user-login-button" href="javascript:" @click="touristLogin(1)">
                        <img src="./image/user-1-default.png" alt="男游客登录">
                        <span>男游客</span>
                    </a>
@@ -34,11 +34,16 @@
             
             <header class="im-panel-header">
                 <div class="im-header-user">
-                    <div class="im-header-user-name">
-                        {{ user.name }}
+                    <div class="im-header-user-avatar">
+                        <img :src="user.avatar | getDefaultAvatar" alt="头像" style="width: 100%; height: 100%;">
                     </div>
-                    <div class="im-header-user-remark">
-                        {{ user.remark }}
+                    <div style="margin-left: 8px;">
+                        <div class="im-header-user-name">
+                            {{ user.name }}
+                        </div>
+                        <div class="im-header-user-remark">
+                            {{ user.remark }}
+                        </div>
                     </div>
                 </div>
                 <div class="im-header-setwin">
@@ -71,8 +76,11 @@
 
             <!-- 历史消息-->
             <main class="im-panel-body" v-if="imTabSelectedIndex === 0">
-                <div class="im-user-warning-box">
-                    <div class="im-chat-warning" style="top: 0;" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
+                <div class="im-user-warning-box" v-if="!webSocketIsOpen">
+                    <div class="im-chat-warning" style="top: 0;" v-html="webSocketWarningText"></div>
+                </div>
+                <div class="im-chat-reconnect" v-if="!webSocketIsReconnect">
+                    <a href="javascript:" @click="init">重新连接</a>
                 </div>
                 <div class="im-panel-searchbar">
                     <div class="im-panel-searchbar-inner">
@@ -244,7 +252,7 @@
                         <img src="./image/user-2-default.png" alt="女游客登录">
                         <span>女游客</span>
                     </a>
-                    <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                    <a class="user-login-button" href="javascript:" @click="touristLogin(1)">
                         <img src="./image/user-1-default.png" alt="男游客登录">
                         <span>男游客</span>
                     </a>
@@ -278,7 +286,7 @@
                     </div>
                     <i class="im-icon im-icon-close" @click="closeChat"></i>
                 </div>
-                <div class="im-chat-warning" v-if="!webSocketIsOpen" v-html="webSocketWarningText"></div>
+                <div class="im-chat-warning" v-if="webSocketIsOpen" v-html="webSocketWarningText"></div>
             </header>
 
             <nav style="display: none;">
@@ -670,6 +678,7 @@ export default {
             chatMsgListHandleMoreText: "",
             webSocket: null,
             webSocketReconnectCount: 0,
+            webSocketIsReconnect: true, // 是否重连
             webSocketWarningText:
                 "连接断开,正在尝试重连 <i class='dotting'></i>",
             webSocketIsOpen: false,
@@ -725,6 +734,10 @@ export default {
         },
         // 登出
         userOut() {
+            let b = confirm("确定登出吗?");
+            if (!b) {
+                return false;
+            }
             this.delUid();
             this.delSid();
             this.user = {
@@ -739,6 +752,8 @@ export default {
             this.chatMsgList = [];
             this.chatMsgGroupUserList = {};
             this.chatCount = 0;
+            // 关闭websocket 连接
+            this.wsOut();
         },
         // 游客登录
         touristLogin(sex) {
@@ -1483,7 +1498,9 @@ export default {
         webSocketClose() {
             // 修改状态为未连接
             this.webSocketIsOpen = false;
-            if (this.webSocketReconnectCount === 0) {
+            this.webSocket = null;
+            // 判断是否重连
+            if (this.webSocketIsReconnect && this.webSocketReconnectCount === 0) {
                 // 第一次直接尝试重连
                 this.webSocketReconnect();
             }
@@ -1506,6 +1523,10 @@ export default {
         },
         // 初始化 WebSocket
         webSocketInit() {
+            this.webSocketWarningText =
+                "连接断开,正在尝试重连 <i class='dotting'></i>";
+            // 修改是否重连为 true
+            this.webSocketIsReconnect = true;
             this.webSocket = new WebSocket(this.webSocketUrl);
             this.webSocket.onopen = this.webSocketHandleOpen;
             this.webSocket.onerror = this.webSocketHandleError;
@@ -1542,7 +1563,7 @@ export default {
             this.webSocketReconnectCount = 0;
             // 发送登录信息
             const payload = {
-                type: 0
+                type: 1
             };
             this.webSocketSend(payload);
             // 开启定时心跳
@@ -1568,6 +1589,10 @@ export default {
                 console.log("服务端消息:", response);
                 let type = response.type || 0;
                 switch (type) {
+                    case -1: // 异地登录
+                        // 通知下线
+                        this.wsOut();
+                        break;
                     case 1: // 好友消息
                         this.wsFriendMsgHandle(response);
                         break;
@@ -1583,6 +1608,15 @@ export default {
                         break;
                 }
             });
+        },
+        wsOut() {
+            this.webSocketWarningText = "异地登录请重新登录";
+            // 修改重连状态
+            this.webSocketIsReconnect = false;
+            if (this.webSocket) {
+                // 关闭 websocket
+                this.webSocket.close();
+            }
         },
         // 好友请求
         wsFriendAskHandle() {
@@ -2270,7 +2304,7 @@ input {
     cursor: move;
 }
 .im-panel-header {
-    /*background-color: #6ed0ce;*/
+    position: relative;
     background-color: rgba(230, 230, 230, 0.7);
     color: #fff;
     height: 80px;
@@ -2283,15 +2317,26 @@ input {
         float: left;
         padding-left: 8px;
         margin-top: 12px;
+        display: flex;
+        .im-header-user-avatar {
+            display: inline-block;
+            width: 52px;
+            height: 52px;
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+            }
+        }
         .im-header-user-name {
             display: inline-block;
-            width: 175px;
+            width: 170px;
             margin-top: 5px;
             color: #000;
             @include text-overflow;
         }
         .im-header-user-remark {
-            width: 175px;
+            width: 170px;
             margin-top: 1px;
             font-size: 13px;
             color: rgba(0,0,0,0.6);
@@ -2311,7 +2356,8 @@ input {
         cursor: pointer;
     }
     .im-header-setwin {
-        float: right;
+        position: absolute;
+        right: 5px;
     }
 }
 .user-qrcode-box {
@@ -2746,6 +2792,13 @@ input {
     25% { border-color: transparent; background-color: transparent; }          /* 0个点 */
     50% { border-right-color: transparent; background-color: transparent; }    /* 1个点 */
     75% { border-right-color: transparent; }                                   /* 2个点 */
+}
+.im-chat-reconnect {
+    width: 100%;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    background-color: #f8f8f8;
 }
 .im-chat-user {
     cursor: default;
