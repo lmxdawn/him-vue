@@ -40,6 +40,27 @@
 
                 </h4>
 
+                <h1>功能列表</h1>
+                <div class="gongneng-list">
+                    <div><label><input type="checkbox" disabled checked />单聊</label></div>
+                    <div><label><input type="checkbox" disabled checked />群聊</label></div>
+                    <div><label><input type="checkbox" disabled checked />protobuf 编解码</label></div>
+                    <div><label><input type="checkbox" disabled checked />客户端心跳</label></div>
+                    <div><label><input type="checkbox" disabled checked />客户端断开重连</label></div>
+                    <div><label><input type="checkbox" disabled checked />异地登录, 通知下线</label></div>
+                    <div><label><input type="checkbox" disabled checked />移动端/PC端适配</label></div>
+                    <div><label><input type="checkbox" disabled checked />离线消息 (ack 机制, 实现可达性)</label></div>
+                    <div><label><input type="checkbox" disabled checked />第三方QQ登录</label></div>
+                    <div><label><input type="checkbox" disabled checked />自带 emoji 表情</label></div>
+                    <div><label><input type="checkbox" disabled checked />文本消息</label></div>
+                    <div><label><input type="checkbox" disabled/>声音提示</label></div>
+                    <div><label><input type="checkbox" disabled/>图片消息</label></div>
+                    <div><label><input type="checkbox" disabled/>音频消息</label></div>
+                    <div><label><input type="checkbox" disabled/>视屏消息</label></div>
+                    <div><label><input type="checkbox" disabled/>分布式部署</label></div>
+                    <div><label><input type="checkbox" disabled/>PHP 版本的 (Workerman 版本)</label></div>
+                </div>
+
             </div>
 
             <h2 style="margin-top: 20px;">效果图</h2>
@@ -354,7 +375,21 @@ export default {
         }
     }
 }
+.gongneng-list {
+    width: 300px;
+    margin: 0 auto;
+    text-align: left;
+    input {
+        -webkit-appearance: checkbox;
+        -moz-appearance: checkbox;
+        appearance: checkbox;
+        margin-right: 5px;
+    }
+}
 @media screen and (max-width: 768px) {
+    .gongneng-list{
+        width: 80%;
+    }
     .img-list {
         padding-left: 0;
         padding-right: 0;
