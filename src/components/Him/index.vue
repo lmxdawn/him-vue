@@ -732,12 +732,15 @@ export default {
                 }
             }
         },
-        // 登出
-        userOut() {
+        userOutClick() {
             let b = confirm("确定登出吗?");
             if (!b) {
                 return false;
             }
+            this.userOut();
+        },
+        // 登出
+        userOut() {
             this.delUid();
             this.delSid();
             this.user = {
