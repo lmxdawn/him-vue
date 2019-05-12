@@ -149,8 +149,7 @@ location /ws
 |  apiBaseUrl|   api 接口的地址| string |  —   |  —   | 
 |  webSocketUrl|   websocket 的连接地址 | string |  —   |  —   | 
 |  userQRCodeUrl |   用户二维码的生成地址 | string |  —   |  —   | 
-|  groupQRCodeUrl|   群二维码的生成地址 | string |  —   |  —   | 
-| qqLoginUrl   |  QQ 登录的url | string|  —   |  —   | 
+|  groupQRCodeUrl|   群二维码的生成地址 | string |  —   |  —   |
 |  isAutoInit |   是否自动初始化（如果为 false 需要执行） | boolean |  —   |  true  | 
 |  webSocketReconnectMaxCount |   尝试重新连接的最大次数 |number|  —   |  5 | 
 

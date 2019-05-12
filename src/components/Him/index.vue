@@ -8,6 +8,21 @@
              ref="imBox">
             <div class="im-box-move" @mousedown="moveImBox"></div>
             
+            <div class="im-box-confirm-box" v-if="confirm.isShow" @click="confirm.isShow = false">
+                <div class="im-box-confirm">
+                    <div class="im-box-confirm-header">
+                        <div class="im-box-confirm-title">{{confirm.title}}</div>
+                    </div>
+                    <div class="im-box-confirm-content">
+                        <div class="im-box-confirm-message">{{confirm.message}}</div>
+                    </div>
+                    <div class="im-box-confirm-buttons">
+                        <div class="im-box-confirm-button im-box-confirm-cancel" @click="confirm.cancelHandle()">{{confirm.cancelName}}</div>
+                        <div class="im-box-confirm-button im-box-confirm-ok" @click="confirm.okHandle()">{{confirm.okName}}</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="user-qrcode-box" v-if="userQRCodeVisible" @click="userQRCodeCloseHandle">
                 <div class="user-qrcode">
                     <img :src="userQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(userQRCodeImg)">
@@ -25,7 +40,7 @@
                        <img src="./image/user-1-default.png" alt="男游客登录">
                        <span>男游客</span>
                    </a>
-                    <a class="user-login-button" :href="qqLoginUrl">
+                    <a class="user-login-button" href="javascript:" @click="qqLoginClick">
                         <img src="./image/login-qq.png" alt="QQ登录">
                         <span>QQ登录</span>
                     </a>
@@ -256,7 +271,7 @@
                         <img src="./image/user-1-default.png" alt="男游客登录">
                         <span>男游客</span>
                     </a>
-                    <a class="user-login-button" :href="qqLoginUrl">
+                    <a class="user-login-button" href="javascript:" @click="qqLoginClick">
                         <img src="./image/login-qq.png" alt="QQ登录">
                         <span>QQ登录</span>
                     </a>
@@ -423,7 +438,6 @@ export default {
         webSocketUrl: String,
         userQRCodeUrl: String, // 用户二维码的生成地址
         groupQRCodeUrl: String, // 群二维码的生成地址
-        qqLoginUrl: String, // QQ 登录的url
         // 是否自动初始化
         isAutoInit: {
             type: Boolean,
@@ -447,15 +461,7 @@ export default {
             default: function(data) {
                 return JSON.parse(data);
             }
-        },
-        // 点击了关闭按钮
-        downClick: Function,
-        // 点击了 QQ 登录
-        qqLoginClick: Function,
-        // 登录初始化完成
-        loginInitHandle: Function,
-        // 请求错误处理
-        requestErrHandle: Function
+        }
     },
     data() {
         return {
@@ -684,28 +690,51 @@ export default {
             webSocketIsOpen: false,
             // 心跳定时器
             webSocketPingTimer: null,
-            webSocketPingTime: 10000 // 心跳的间隔，当前为 10秒
+            webSocketPingTime: 10000, // 心跳的间隔，当前为 10秒,
+            confirm: {
+                isShow: false, // 是否显示
+                title: "提示", // 标题
+                message: "确定执行吗?", // 标题
+                okHandle: function() {}, // 确认的回调
+                okName: "确认", // 确认按钮的名称
+                cancelHandle: function() {}, // 取消的回调
+                cancelName: "取消" // 取消按钮的名称
+            }
         };
     },
     methods: {
         // 设置 登录用户ID
         setUid(value) {
-            Cookies.set("UID", value, { expires: 365 });
+            Cookies.set("UID", value, {
+                expires: 365,
+                path: "/"
+            });
         },
         getUid() {
-            return Cookies.get("UID");
+            return Cookies.get("UID", {
+                path: "/"
+            });
         },
         delUid() {
-            return Cookies.remove("UID");
+            return Cookies.remove("UID", {
+                path: "/"
+            });
         },
         setSid(value) {
-            Cookies.set("SID", value, { expires: 365 });
+            Cookies.set("SID", value, {
+                expires: 365,
+                path: "/"
+            });
         },
         getSid() {
-            return Cookies.get("SID");
+            return Cookies.get("SID", {
+                path: "/"
+            });
         },
         delSid() {
-            return Cookies.remove("SID");
+            return Cookies.remove("SID", {
+                path: "/"
+            });
         },
         setLocalStorage(name, value) {
             localStorage.setItem(name, value);
@@ -732,12 +761,45 @@ export default {
                 }
             }
         },
-        userOutClick() {
-            let b = confirm("确定登出吗?");
-            if (!b) {
-                return false;
+        // 点击了 QQ 登录
+        qqLoginClick() {
+            // 传递到父组件
+            this.$emit("on-qq-login-click");
+        },
+        // im-box 的询问框
+        confirmInit(
+            title,
+            message,
+            okHandle,
+            cancelHandle,
+            okName,
+            cancelName
+        ) {
+            this.confirm.isShow = true;
+            this.confirm.title = title;
+            this.confirm.message = message;
+            this.confirm.okHandle = okHandle;
+            this.confirm.cancelHandle = cancelHandle;
+            if (okName) {
+                this.confirm.okName = okName;
             }
-            this.userOut();
+            if (cancelName) {
+                this.confirm.cancelName = cancelName;
+            }
+        },
+        userOutClick() {
+            this.confirmInit(
+                "提示",
+                "确定登出吗?",
+                () => {
+                    // 确定了
+                    this.userOut();
+                },
+                () => {
+                    // 取消了登出
+                    this.confirm.isShow = false;
+                }
+            );
         },
         // 登出
         userOut() {
@@ -831,13 +893,8 @@ export default {
                 this.delUid();
                 this.delSid();
             }
-            // 调用外部方法
-            if (
-                this.requestErrHandle &&
-                typeof this.requestErrHandle === "function"
-            ) {
-                this.requestErrHandle(code, message);
-            }
+            // 向父组件传递出去
+            this.$emit("on-request-err", code, message);
         },
         userQRCodeClick() {
             if (this.userQRCodeImg) {
@@ -1069,9 +1126,8 @@ export default {
             }
         },
         isShowClick() {
-            if (this.downClick && typeof this.downClick === "function") {
-                this.downClick();
-            }
+            // 传递到父组件
+            this.$emit("on-is-show-click");
         },
         // 关闭
         closeChat() {
@@ -1107,13 +1163,8 @@ export default {
                     }
                     let data = response.data;
                     this.user = data;
-                    // 调用外部方法
-                    if (
-                        this.loginInitHandle &&
-                        typeof this.loginInitHandle === "function"
-                    ) {
-                        this.loginInitHandle();
-                    }
+                    // 向父组件传递登录初始化完成
+                    this.$emit("on-login-init");
                     // 递归拉取好友
                     this.getUserFriendList(1, this.userFriendListLimit);
                     // 递归拉取群列表
@@ -1595,6 +1646,10 @@ export default {
                 console.log("服务端消息:", response);
                 let type = response.type || 0;
                 switch (type) {
+                    case -2: // 登录异常
+                        // 退出登录
+                        this.userOut();
+                        break;
                     case -1: // 异地登录
                         // 通知下线
                         this.wsOut();
@@ -2397,6 +2452,74 @@ input {
         right: 5px;
     }
 }
+.im-box-confirm-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    text-align: center;
+    .im-box-confirm {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate3d(-50%,-50%,0);
+        background-color: #fff;
+        width: 85%;
+        border-radius: 3px;
+        font-size: 16px;
+        overflow: hidden;
+        backface-visibility: hidden;
+        transition: .2s;
+    }
+    .im-box-confirm-header {
+        padding: 15px 0 0;
+    }
+    .im-box-confirm-title {
+        text-align: center;
+        padding-left: 0;
+        margin-bottom: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #333;
+    }
+    .im-box-confirm-content {
+        padding: 10px 20px 15px;
+        border-bottom: 1px solid #ddd;
+        min-height: 36px;
+        position: relative;
+    }
+    .im-box-confirm-message {
+        color: #999;
+        margin: 0;
+        text-align: center;
+        line-height: 36px;
+    }
+    .im-box-confirm-buttons {
+        display: flex;
+        height: 40px;
+        line-height: 40px;
+    }
+    .im-box-confirm-button {
+        line-height: 35px;
+        display: block;
+        background-color: #fff;
+        flex: 1;
+        margin: 0;
+        border: 0;
+        cursor: pointer;
+    }
+    .im-box-confirm-cancel {
+        width: 50%;
+        border-right: 1px solid #ddd;
+    }
+    .im-box-confirm-ok {
+        color: #26a2ff;
+        width: 50%;
+    }
+}
 .user-qrcode-box {
     position: absolute;
     top: 0;
@@ -3142,10 +3265,12 @@ input {
     .im-box {
         width: 100% !important;
         height: 100% !important;
+        border: 0 !important;
     }
     .im-chat-box {
         width: 100%;
         height: 100%;
+        border: 0 !important;
     }
 }
 </style>

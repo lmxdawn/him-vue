@@ -1,6 +1,12 @@
 <template>
     <div>
+        <!--错误信息方便调试-->
+        <div class="errlog-box" v-if="errLog.length > 0">
 
+            <textarea id="errlog" v-model="errLog">
+
+        </textarea>
+        </div>
         <div class="text" :class="{'is-show': isShow}">
             <h1 class="title" style="font-size: 18px;">一篇文章引发的<span style="color: red;">xue</span>案</h1>
             <div class="content">
@@ -32,7 +38,7 @@
                     <br/>
                     <span style="font-size: 20px;">↓</span>
                     <br/>
-                    点击右上方的 二维码按钮, 生成二维码
+                    点击右上方的 二维码按钮, 生成二维码 <span style="color: red;">注意: 建议在浏览器中测试, 因为反复测试, 在iOS手机版的QQ中退出登录会失败, 因为Cookie清空不了</span>
                     <br/>
                     <span style="font-size: 20px;">↓</span>
                     <br/>
@@ -165,17 +171,16 @@
                 :webSocketUrl="webSocketUrl"
                 :userQRCodeUrl="userQRCodeUrl"
                 :groupQRCodeUrl="groupQRCodeUrl"
-                :qqLoginUrl="qqLoginUrl"
                 :WSResEncode="WSResEncode"
                 :WSResDecode="WSResDecode"
-                :downClick="downClick"
-                :qqLoginClick="qqLoginClick"
-                :loginInitHandle="loginInitHandle"
-                :requestErrHandle="requestErrHandle">
+                @on-is-show-click="isShowClick"
+                @on-qq-login-click="qqLoginClick"
+                @on-login-init="loginInit"
+                @on-request-err="requestErr">
 
             </him>
         </div>
-        <div class="btn-ok" @click="downClick" v-if="!isShow">
+        <div class="btn-ok" @click="isShowClick" v-if="!isShow">
             <i class="icon"></i>
             <span class="text">我们聊天吧~</span>
         </div>
@@ -197,6 +202,7 @@ export default {
     data() {
         const qqRedirectUri = "http://him-netty.await.fun/h5";
         return {
+            errLog: "",
             isShow: false,
             qqRedirectUri: qqRedirectUri,
             qqLoginUrl:
@@ -237,12 +243,13 @@ export default {
         // 点击了QQ登录
         qqLoginClick() {
             // 前去授权
+            window.location.href = this.qqLoginUrl;
         },
-        downClick() {
+        isShowClick() {
             this.isShow = !this.isShow;
         },
         // 登录初始化完成
-        loginInitHandle() {
+        loginInit() {
             let userCheckCode = this.getUserCheckCode();
             let groupCheckCode = this.getGroupCheckCode();
             console.log("登录初始化完成", userCheckCode, groupCheckCode);
@@ -266,8 +273,9 @@ export default {
                 this.isShow = true;
             }, 1000);
         },
-        requestErrHandle(code, message) {
-            alert(code + "-" + message);
+        requestErr(code, message) {
+            let text = "接口报错: code: " + code + ", message:" + message;
+            this.errLog = text + "\n" + this.errLog;
         },
         getQueryVariable(variable) {
             var query = window.location.search.substring(1);
@@ -281,22 +289,36 @@ export default {
             return false;
         },
         setUserCheckCode(value) {
-            Cookies.set("USER_CHECK_CODE", value, { expires: 1 });
+            Cookies.set("USER_CHECK_CODE", value, {
+                expires: 1,
+                path: "/"
+            });
         },
         getUserCheckCode() {
-            return Cookies.get("USER_CHECK_CODE");
+            return Cookies.get("USER_CHECK_CODE", {
+                path: "/"
+            });
         },
         delUserCheckCode() {
-            return Cookies.remove("USER_CHECK_CODE");
+            return Cookies.remove("USER_CHECK_CODE", {
+                path: "/"
+            });
         },
         setGroupCheckCode(value) {
-            Cookies.set("GROUP_CHECK_CODE", value, { expires: 1 });
+            Cookies.set("GROUP_CHECK_CODE", value, {
+                expires: 1,
+                path: "/"
+            });
         },
         getGroupCheckCode() {
-            return Cookies.get("GROUP_CHECK_CODE");
+            return Cookies.get("GROUP_CHECK_CODE", {
+                path: "/"
+            });
         },
         delGroupCheckCode() {
-            return Cookies.remove("GROUP_CHECK_CODE");
+            return Cookies.remove("GROUP_CHECK_CODE", {
+                path: "/"
+            });
         }
     },
     mounted() {
@@ -304,8 +326,11 @@ export default {
         this.code = this.getQueryVariable("code"); // QQ 登录的code码
         if (this.code) {
             this.$refs["him"].qqLogin(this.code, this.qqRedirectUri);
+            // 清空浏览器地址栏的值, 这里其实是刷新当前页面
             this.$router.push("/");
         }
+        // Cookies.remove("UID");
+        // Cookies.remove("SID");
     },
     created() {
         // 获取get参数
@@ -394,7 +419,20 @@ export default {
         margin-right: 5px;
     }
 }
+.errlog-box {
+    width: 400px;
+    margin: 0 auto;
+    height: 300px;
+    color: red;
+    textarea {
+        width: 100%;
+        height: 100%;
+    }
+}
 @media screen and (max-width: 768px) {
+    .errlog-box {
+        width: 100%;
+    }
     .gongneng-list {
         width: 80%;
     }
