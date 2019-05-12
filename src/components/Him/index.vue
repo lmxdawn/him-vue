@@ -1482,7 +1482,7 @@ export default {
         // 追加消息到当前聊天 {isLoad：是否加载更多}
         pushChatMsgList(msgType, msgContent, user, createTime, isLoad) {
             msgContent = this.createContent(msgContent);
-            createTime = this.formatDate(createTime);
+            createTime = this.formatDate(createTime, "yyyy/MM/dd hh:mm:ss");
             let item = {};
             item.isMine = this.user.uid === user.uid;
             item.user = user;
@@ -1898,7 +1898,10 @@ export default {
                 data.msgType = msgType;
                 data.user = user;
                 data.msgContent = this.createContent(msgContent);
-                data.createTime = this.formatDate(createTime);
+                data.createTime = this.formatDate(
+                    createTime,
+                    "yyyy/MM/dd hh:mm:ss"
+                );
                 this.chatMsgList.push(data);
             }
 
@@ -1947,20 +1950,60 @@ export default {
             return text;
         },
         // 日期的格式化
-        formatDate(dateStr) {
+        formatDate(dateStr, fmt) {
+            if (!dateStr) {
+                return "";
+            }
             let date = new Date(dateStr);
-            let year = date.getFullYear();
-            let month = date.getMonth();
-            month = month < 10 ? "0" + month : month;
-            let day = date.getDate();
-            day = day < 10 ? "0" + day : day;
-            let hour = date.getHours();
-            hour = hour < 10 ? "0" + hour : hour;
-            let minute = date.getMinutes();
-            minute = minute < 10 ? "0" + minute : minute;
-            let seconds = date.getSeconds();
-            seconds = seconds < 10 ? "0" + seconds : seconds;
-            return year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + seconds;
+            if (isNaN(date.getDate())) {
+                // 说明有可能是手机端, 做一下处理
+                dateStr = dateStr.replace(/T/g, ' ');
+                dateStr = dateStr.replace(/-/g, '/');
+                dateStr = dateStr.replace(/\.\d+/, ' ');
+                date = new Date(dateStr);
+                // 如果还是转换不了
+                if (isNaN(date.getDate())) {
+                    return "";
+                }
+            }
+            if (!fmt) {
+                fmt = "yyyy-MM-dd";
+            }
+            const o = {
+                "M+": date.getMonth() + 1, //月份
+                "d+": date.getDate(), //日
+                "h+": date.getHours(), //小时
+                "m+": date.getMinutes(), //分
+                "s+": date.getSeconds(), //秒
+                "q+": Math.floor((date.getMonth() + 3) / 3), //季度
+                S: date.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt))
+                fmt = fmt.replace(
+                    RegExp.$1,
+                    (date.getFullYear() + "").substr(4 - RegExp.$1.length)
+                );
+            for (let k in o)
+                if (new RegExp("(" + k + ")").test(fmt))
+                    fmt = fmt.replace(
+                        RegExp.$1,
+                        RegExp.$1.length === 1
+                            ? o[k]
+                            : ("00" + o[k]).substr(("" + o[k]).length)
+                    );
+            return fmt;
+            // let year = date.getFullYear();
+            // let month = date.getMonth();
+            // month = month < 10 ? "0" + month : month;
+            // let day = date.getDate();
+            // day = day < 10 ? "0" + day : day;
+            // let hour = date.getHours();
+            // hour = hour < 10 ? "0" + hour : hour;
+            // let minute = date.getMinutes();
+            // minute = minute < 10 ? "0" + minute : minute;
+            // let seconds = date.getSeconds();
+            // seconds = seconds < 10 ? "0" + seconds : seconds;
+            // return year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + seconds;
         },
         htmlSpecialChars(str) {
             str = str.replace(/&/g, "&amp;");
