@@ -733,7 +733,6 @@ export default {
             Cookies.remove("UID", {
                 path: "/"
             });
-            this.requestErr(1111, this.getUid());
         },
         setSid(value) {
             Cookies.set("SID", value, {
@@ -755,7 +754,6 @@ export default {
                 domain: window.location.hostname,
                 path: "/"
             });
-            this.requestErr(1111, this.getSid());
         },
         setLocalStorage(name, value) {
             localStorage.setItem(name, value);
