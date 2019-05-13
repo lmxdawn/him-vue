@@ -372,7 +372,7 @@
                     </div>
                 </div>
                 <div class="im-chat-text-holder">
-                    <textarea placeholder="请输入" ref="himChatText" v-model="chatText"></textarea>
+                    <textarea placeholder="请输入" ref="himChatText" @blur="chatTextBlur" v-model="chatText"></textarea>
                 </div>
                 <div class="im-chat-send-box">
                     <div class="im-chat-send">
@@ -703,6 +703,10 @@ export default {
         };
     },
     methods: {
+        // 输入框的失去焦点事件, 解决微信中的bug
+        chatTextBlur() {
+            window.scroll(0, 0);
+        },
         // 判断字符是否为空的方法
         isEmpty(obj) {
             return (
@@ -2060,18 +2064,6 @@ export default {
                             : ("00" + o[k]).substr(("" + o[k]).length)
                     );
             return fmt;
-            // let year = date.getFullYear();
-            // let month = date.getMonth();
-            // month = month < 10 ? "0" + month : month;
-            // let day = date.getDate();
-            // day = day < 10 ? "0" + day : day;
-            // let hour = date.getHours();
-            // hour = hour < 10 ? "0" + hour : hour;
-            // let minute = date.getMinutes();
-            // minute = minute < 10 ? "0" + minute : minute;
-            // let seconds = date.getSeconds();
-            // seconds = seconds < 10 ? "0" + seconds : seconds;
-            // return year + "/" + month + "/" + day + " " + hour + ":" + minute + ":" + seconds;
         },
         htmlSpecialChars(str) {
             str = str.replace(/&/g, "&amp;");

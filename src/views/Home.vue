@@ -54,11 +54,14 @@
 
                 </h4>
 
-                <h1 style="color: red;">已知的问题列表</h1>
+                <h1 style="color: red;margin-top: 10px;">已知的问题列表</h1>
 
-                <div>
-                    <div>1. iOS版本手机QQ中清空不了 Cookie 的bug (Android 版本的QQ没试), 其它浏览器均正常</div>
-                    <div>2. 手机微信中打开后点击输入文字后, 不管点不点击发送按钮都会出现短暂的不能点击的现象(任何按钮都不能点击), 后来发现是因为在微信里面, 输入法把 输入框顶上去了, 然后输入法隐藏后输入框还在上面!!!!</div>
+                <div class="wenti-list">
+                    <div style="margin-top: 5px">1. iOS版本手机QQ中清空不了 Cookie 的bug (Android 版本的QQ没试), 其它浏览器均正常</div>
+                    <div style="margin-top: 5px;">
+                        2. 手机微信中打开后点击输入文字后, 不管点不点击发送按钮都会出现短暂的不能点击的现象(任何按钮都不能点击), 后来发现是因为在微信里面, 输入法把 输入框顶上去了, 然后输入法隐藏后输入框还在上面!!!!
+                        <a target="_blank" href="https://developers.weixin.qq.com/community/develop/doc/00040a43cd4290dedbc7e7f1851400">点击查看详情</a>
+                    </div>
                 </div>
 
                 <h1>功能列表</h1>
@@ -416,6 +419,11 @@ export default {
         }
     }
 }
+.wenti-list {
+    width: 800px;
+    margin: 0 auto;
+    text-align: left;
+}
 .gongneng-list {
     width: 300px;
     margin: 0 auto;
@@ -440,6 +448,9 @@ export default {
 @media screen and (max-width: 768px) {
     .errlog-box {
         width: 100%;
+    }
+    .wenti-list {
+        width: 85%;
     }
     .gongneng-list {
         width: 80%;
