@@ -703,6 +703,12 @@ export default {
         };
     },
     methods: {
+        // 判断字符是否为空的方法
+        isEmpty(obj) {
+            return (
+                !obj || typeof obj === "undefined" || obj === null || obj === ""
+            );
+        },
         // 设置 登录用户ID
         setUid(value) {
             Cookies.set("UID", value, {
@@ -711,14 +717,19 @@ export default {
             });
         },
         getUid() {
-            return Cookies.get("UID", {
+            let uid = Cookies.get("UID", {
                 path: "/"
             });
+            if (this.isEmpty(uid)) {
+                return null;
+            }
+            return uid;
         },
         delUid() {
-            return Cookies.remove("UID", {
+            Cookies.remove("UID", {
                 path: "/"
             });
+            this.requestErr(1111, this.getUid());
         },
         setSid(value) {
             Cookies.set("SID", value, {
@@ -727,14 +738,20 @@ export default {
             });
         },
         getSid() {
-            return Cookies.get("SID", {
+            let sid = Cookies.get("SID", {
                 path: "/"
             });
+            if (this.isEmpty(sid)) {
+                return null;
+            }
+            return sid;
         },
         delSid() {
-            return Cookies.remove("SID", {
+            Cookies.remove("SID", {
+                domain: window.location.hostname,
                 path: "/"
             });
+            this.requestErr(1111, this.getSid());
         },
         setLocalStorage(name, value) {
             localStorage.setItem(name, value);
@@ -1024,10 +1041,6 @@ export default {
             this.chatMsgListFriendQuery.page = 1;
             this.chatMsgListGroupQuery.page = 1;
             this.chatMsgGroupUserList = {};
-            // 默认选中, 需要延时等挂载好
-            setTimeout(() => {
-                this.$refs.himChatText.select();
-            }, 100);
             // 追加
             this.getChatMsgList();
         },

@@ -54,6 +54,13 @@
 
                 </h4>
 
+                <h1 style="color: red;">已知的问题列表</h1>
+
+                <div>
+                    <div>1. iOS版本手机QQ中清空不了 Cookie 的bug (Android 版本的QQ没试), 其它浏览器均正常</div>
+                    <div>2. 手机微信中打开后点击输入文字后, 不管点不点击发送按钮都会出现短暂的不能点击的现象(任何按钮都不能点击), 后来发现是因为在微信里面, 输入法把 输入框顶上去了, 然后输入法隐藏后输入框还在上面!!!!</div>
+                </div>
+
                 <h1>功能列表</h1>
                 <div class="gongneng-list">
                     <div><label><input type="checkbox" disabled checked />单聊</label></div>
@@ -201,12 +208,15 @@ export default {
 
     data() {
         const qqRedirectUri = "http://him-netty.await.fun/h5";
+        const client_id = "101574853";
         return {
             errLog: "",
             isShow: false,
             qqRedirectUri: qqRedirectUri,
             qqLoginUrl:
-                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=101579192&redirect_uri=" +
+                "https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=" +
+                client_id +
+                "&redirect_uri=" +
                 encodeURIComponent(qqRedirectUri) +
                 "&state=1",
             userCheckCode: null,
@@ -329,8 +339,6 @@ export default {
             // 清空浏览器地址栏的值, 这里其实是刷新当前页面
             this.$router.push("/");
         }
-        // Cookies.remove("UID");
-        // Cookies.remove("SID");
     },
     created() {
         // 获取get参数
