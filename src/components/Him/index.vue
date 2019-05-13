@@ -53,10 +53,10 @@
                         <img :src="user.avatar | getDefaultAvatar" alt="头像" style="width: 100%; height: 100%;">
                     </div>
                     <div style="margin-left: 8px;">
-                        <div class="im-header-user-name">
+                        <div class="im-header-user-name" :title="user.name">
                             {{ user.name }}
                         </div>
-                        <div class="im-header-user-remark">
+                        <div class="im-header-user-remark" :title="user.remark">
                             {{ user.remark }}
                         </div>
                     </div>
@@ -283,14 +283,14 @@
                 <div class="im-chat-user">
                     <img :src="chatUser.avatar | getDefaultAvatar" alt="" class="im-chat-user-avatar">
                     <div class="im-chat-user-info">
-                        <span class="im-chat-user-name">
+                        <span class="im-chat-user-name" :title="chatUser.name">
                             {{ chatUser.name }}
                         </span>
                         <span class="im-chat-user-list-button" v-if="Object.keys(chatMsgGroupUserList).length > 0">
                             {{Object.keys(chatMsgGroupUserList).length}}人
                         </span>
                         <i class="im-icon im-icon-panel-down" v-if="chatUser.type === 2" @click="isShowGroupUserListClick"></i>
-                        <span class="im-chat-user-remark">
+                        <span class="im-chat-user-remark" :title="chatUser.remark">
                             {{ chatUser.remark }}
                         </span>
                     </div>
@@ -682,6 +682,7 @@ export default {
             chatMsgListScrollTop: true,
             chatMsgListHandleLoading: false,
             chatMsgListHandleMoreText: "",
+            chatMaxCount: 1, // 最大消息数, 用作有多少条消息就 ack 一次, 后期可以做成定时器
             webSocket: null,
             webSocketReconnectCount: 0,
             webSocketIsReconnect: true, // 是否重连
@@ -751,7 +752,6 @@ export default {
         },
         delSid() {
             Cookies.remove("SID", {
-                domain: window.location.hostname,
                 path: "/"
             });
         },
@@ -1151,6 +1151,8 @@ export default {
             this.historyMsgListSelected = {};
             this.chatMsgList = [];
             this.chatVisible = false;
+            // 清空文本
+            this.chatText = "";
             // 如果有当前窗口有未读消息，清除一下未读消息
             if (this.chatCount > 0) {
                 this.chatCount = 0;
@@ -1773,9 +1775,9 @@ export default {
                 };
                 this.pushChatMsgList(msgType, msgContent, user, createTime);
                 unMsgCount = 0;
-                // 如果超过 5 个消息，则做一次 ACK 消息的操作
+                // 如果超过 1 个消息，则做一次 ACK 消息的操作
                 this.chatCount += 1;
-                if (this.chatCount >= 5) {
+                if (this.chatCount >= this.chatMaxCount) {
                     this.chatCount = 0;
                     // 清空消息
                     this.msgClearUnMsgCount(historyType, id);
@@ -1836,9 +1838,9 @@ export default {
                 };
                 this.pushChatMsgList(msgType, msgContent, user, createTime);
                 unMsgCount = 0;
-                // 如果超过 5 个消息，则做一次 ACK 消息的操作
+                // 如果超过 多少 个消息，则做一次 ACK 消息的操作
                 this.chatCount += 1;
-                if (this.chatCount >= 5) {
+                if (this.chatCount >= this.chatMaxCount) {
                     this.chatCount = 0;
                     // 清空消息
                     this.msgClearUnMsgCount(historyType, id);
@@ -2967,6 +2969,8 @@ input {
 }
 .im-chat-user {
     cursor: default;
+    display: flex;
+    align-items: center;
 }
 .im-chat-user-avatar {
     display: inline-block;
@@ -2980,11 +2984,11 @@ input {
     display: inline-block;
     margin-left: 10px;
     vertical-align: middle;
+    overflow: hidden;
 }
 .im-chat-user-name {
     display: inline-block;
     max-width: 160px;
-    /*margin-top: 5px;*/
     font-size: 14px;
     @include text-overflow;
 }
@@ -2996,10 +3000,10 @@ input {
 }
 .im-chat-user-remark {
     display: block;
-    max-width: 200px;
-    /*margin-top: 7px;*/
     font-size: 13px;
     color: #999;
+    margin-top: 5px;
+    width: 100%;
     @include text-overflow;
 }
 .im-chat-setwin {
