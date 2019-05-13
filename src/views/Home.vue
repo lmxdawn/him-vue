@@ -8,15 +8,15 @@
         </textarea>
         </div>
         <div class="text" :class="{'is-show': isShow}">
-            <h1 class="title" style="font-size: 18px;">一篇文章引发的<span style="color: red;">xue</span>案</h1>
+            <h1 class="title" style="font-size: 18px;">一篇文章引发的<span style="color: red;">思考</span></h1>
             <div class="content">
                 一次读公号推文, 发现一篇文章写得特好, 勾起了好奇心
                 <h2 style="margin-top: 20px;"><a target="_blank" href="https://mp.weixin.qq.com/s/so7F88S7-3Wmq9x_rrYAoA">《群聊比单聊，为什么复杂这么多？》</a></h2>
-                <h5><span style="color: rgb(0, 82, 255)">( 画外音: 点击查看详情 )</span> </h5>
+                <h5><cite style="color: rgb(0, 82, 255)">( 画外音: 点击查看详情 )</cite> </h5>
                 <h3 style="margin-top: 10px;">从此无法自拔</h3>
                 <div style="color: #99a9bf">于是有了下面的故事</div>
                 <h3 style="margin-top: 20px;">开源的H5聊天系统 </h3>
-                <h5><span style="color: rgb(0, 82, 255)">( 画外音: 开源爱好者😝 )</span> </h5>
+                <h5><cite style="color: rgb(0, 82, 255)">( 画外音: 开源爱好者😝 )</cite> </h5>
                 <div style="color: #99a9bf">注: 你会发现这个系统是适配手机端和PC端的</div>
                 <h5 style="margin-top: 20px;"><span>( 地址 )</span> </h5>
                 <div style="margin-top: 10px;">
