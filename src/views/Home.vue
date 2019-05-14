@@ -92,6 +92,62 @@
             <div class="img-list">
 
                 <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG15.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG15.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG16.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG16.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG17.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG17.jpeg'/>
+                </div>
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG18.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG18.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG19.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG19.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG20.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG20.jpeg'/>
+                </div>
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG21.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG21.jpeg'/>
+                </div>
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG22.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG22.jpeg'/>
+                </div>
+
+
+
+                <div class="img-list-item">
+                    <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/1WechatIMG24.jpeg'/>-->
+                    <img src='http://prbsvykmy.bkt.clouddn.com/pic/1WechatIMG24.jpeg'/>
+                </div>
+
+
+
+
+
+                <div class="img-list-item">
                     <!--<img src='https://github.com/lmxdawn/him-vue/raw/master/pic/WechatIMG6.jpeg'/>-->
                     <img src='http://prbsvykmy.bkt.clouddn.com/pic/WechatIMG6.jpeg'/>
                 </div>
