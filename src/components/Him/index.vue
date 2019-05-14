@@ -1153,6 +1153,8 @@ export default {
             this.chatVisible = false;
             // 清空文本
             this.chatText = "";
+            // 清空群聊的二维码信息
+            this.groupQRCodeImg = null;
             // 如果有当前窗口有未读消息，清除一下未读消息
             if (this.chatCount > 0) {
                 this.chatCount = 0;
@@ -1855,13 +1857,10 @@ export default {
                     this.chatMsgGroupUserList = chatMsgGroupUserList;
                 }
             }
-            // 如果是群消息， 获取群消息
-            if (type === 2) {
-                let groupItem = this.userGroupList[receiveId];
-                name = groupItem ? groupItem.name : "gd" + receiveId;
-                remark = groupItem ? groupItem.remark : "";
-                avatar = groupItem ? groupItem.avatar : "";
-            }
+            let groupItem = this.userGroupList[receiveId];
+            name = groupItem.group ? groupItem.group.name : "gd" + receiveId;
+            remark = groupItem.group ? groupItem.group.remark : "";
+            avatar = groupItem.group ? groupItem.group.avatar : "";
             this.pushHistoryMsg(
                 historyType,
                 receiveId,
