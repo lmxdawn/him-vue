@@ -2033,6 +2033,7 @@ export default {
                     return null;
                 }
             }
+            return date;
         },
         // 日期的格式化
         formatDate(dateStr, fmt) {
@@ -2239,17 +2240,23 @@ export default {
             return data;
         },
         sortHistoryMsgList: function () {
-            let historyMsgList = {};
-            Object.keys(this.historyMsgList)
+            let historyMsgList = [];
+            let historyMsgListKeys = Object.keys(this.historyMsgList)
                 .sort((a, b) => {
                     let aItem = this.historyMsgList[a];
                     let bItem = this.historyMsgList[b];
                     let aDate = this.getDate(aItem.modifiedTime);
+                    if (!aDate) {
+                        return -1;
+                    }
                     let bDate = this.getDate(bItem.modifiedTime);
-                    return aDate - bDate;
+                    if (!bDate) {
+                        return 1;
+                    }
+                    return bDate.getTime() - aDate.getTime();
                 })
                 .map((v) => {
-                    historyMsgList[v] = this.historyMsgList[v];
+                    historyMsgList.push(this.historyMsgList[v]);
                 });
             return historyMsgList;
         }
