@@ -7,7 +7,7 @@
              :style="imBoxStyle"
              ref="imBox">
             <div class="im-box-move" @mousedown="moveImBox"></div>
-            
+
             <div class="im-box-confirm-box" v-if="confirm.isShow" @click="confirm.isShow = false">
                 <div class="im-box-confirm">
                     <div class="im-box-confirm-header">
@@ -32,25 +32,27 @@
 
             <div class="user-login-box" v-if="!user.uid" @click="isShowClick">
                 <div class="user-login-list">
-                   <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
-                       <img src="./image/user-2-default.png" alt="女游客登录">
-                       <span>女游客</span>
-                   </a>
-                   <a class="user-login-button" href="javascript:" @click="touristLogin(1)">
-                       <img src="./image/user-1-default.png" alt="男游客登录">
-                       <span>男游客</span>
-                   </a>
+                    <a class="user-login-button" href="javascript:" @click="touristLogin(2)">
+                        <img src="./image/user-2-default.png" alt="女游客登录">
+                        <span>女游客</span>
+                    </a>
+                    <a class="user-login-button" href="javascript:" @click="touristLogin(1)">
+                        <img src="./image/user-1-default.png" alt="男游客登录">
+                        <span>男游客</span>
+                    </a>
                     <a class="user-login-button" href="javascript:" @click="qqLoginClick">
                         <img src="./image/login-qq.png" alt="QQ登录">
                         <span>QQ登录</span>
                     </a>
                 </div>
             </div>
-            
+
             <header class="im-panel-header">
                 <div class="im-header-user">
-                    <img class="im-header-user-avatar" :src="user.avatar | getDefaultAvatar" alt="头像">
-                    <div class="im-header-user-content">
+                    <div class="im-header-user-avatar">
+                        <img :src="user.avatar | getDefaultAvatar" alt="头像" style="width: 100%; height: 100%;">
+                    </div>
+                    <div style="margin-left: 8px;">
                         <div class="im-header-user-name" :title="user.name">
                             {{ user.name }}
                         </div>
@@ -2283,7 +2285,7 @@ body,
 html {
     height: 100%;
     font-family: "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB",
-        "Microsoft YaHei", sans-serif;
+    "Microsoft YaHei", sans-serif;
     font-size: 14px;
 }
 *,
@@ -2368,9 +2370,9 @@ input {
     background-repeat: no-repeat;
 }
 @media only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (min--moz-device-pixel-ratio: 2),
-    only screen and (-o-min-device-pixel-ratio: 2/1),
-    only screen and (min-device-pixel-ratio: 2) {
+only screen and (min--moz-device-pixel-ratio: 2),
+only screen and (-o-min-device-pixel-ratio: 2/1),
+only screen and (min-device-pixel-ratio: 2) {
     .im-icon {
         background-image: url(image/im-icon@2x.png);
     }
@@ -2422,29 +2424,29 @@ input {
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
     overflow: hidden;
     .im-header-user {
+        float: left;
+        padding-left: 8px;
         margin-top: 12px;
         display: flex;
-        align-items: center;
-        padding-left: 8px;
         .im-header-user-avatar {
             display: inline-block;
             width: 52px;
             height: 52px;
-            border-radius: 50%;
-        }
-        .im-header-user-content {
-            display: inline-block;
-            overflow-x: hidden;
-            vertical-align: middle;
-            margin-left: 8px;
+            img {
+                width: 100%;
+                height: 100%;
+                border-radius: 50%;
+            }
         }
         .im-header-user-name {
             display: inline-block;
+            width: 170px;
             margin-top: 5px;
             color: #000;
             @include text-overflow;
         }
         .im-header-user-remark {
+            width: 240px;
             margin-top: 1px;
             font-size: 13px;
             color: rgba(0,0,0,0.6);
@@ -2465,7 +2467,6 @@ input {
     }
     .im-header-setwin {
         position: absolute;
-        top: 5px;
         right: 5px;
     }
 }
@@ -3190,9 +3191,9 @@ input {
     cursor: pointer;
 }
 @media only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (min--moz-device-pixel-ratio: 2),
-    only screen and (-o-min-device-pixel-ratio: 2/1),
-    only screen and (min-device-pixel-ratio: 2) {
+only screen and (min--moz-device-pixel-ratio: 2),
+only screen and (-o-min-device-pixel-ratio: 2/1),
+only screen and (min-device-pixel-ratio: 2) {
     .im-emoji-control {
         background-image: url(image/emoji@2x.png);
     }
