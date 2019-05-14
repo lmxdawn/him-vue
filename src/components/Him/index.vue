@@ -2020,11 +2020,7 @@ export default {
             }
             return text;
         },
-        // 日期的格式化
-        formatDate(dateStr, fmt) {
-            if (!dateStr) {
-                return "";
-            }
+        getDate(dateStr) {
             let date = new Date(dateStr);
             if (isNaN(date.getDate())) {
                 // 说明有可能是手机端, 做一下处理
@@ -2034,8 +2030,18 @@ export default {
                 date = new Date(dateStr);
                 // 如果还是转换不了
                 if (isNaN(date.getDate())) {
-                    return "";
+                    return null;
                 }
+            }
+        },
+        // 日期的格式化
+        formatDate(dateStr, fmt) {
+            if (!dateStr) {
+                return "";
+            }
+            let date = this.getDate(dateStr);
+            if (!date) {
+                return "";
             }
             if (!fmt) {
                 fmt = "yyyy-MM-dd";
@@ -2238,9 +2244,9 @@ export default {
                 .sort((a, b) => {
                     let aItem = this.historyMsgList[a];
                     let bItem = this.historyMsgList[b];
-                    let aModifiedTime = new Date(aItem.modifiedTime);
-                    let bModifiedTime = new Date(bItem.modifiedTime);
-                    return bModifiedTime - aModifiedTime;
+                    let aDate = this.getDate(aItem.modifiedTime);
+                    let bDate = this.getDate(bItem.modifiedTime);
+                    return aDate - bDate;
                 })
                 .map((v) => {
                     historyMsgList[v] = this.historyMsgList[v];
