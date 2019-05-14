@@ -2987,6 +2987,7 @@ only screen and (min-device-pixel-ratio: 2) {
     align-items: center;
 }
 .im-chat-user-avatar {
+    flex: 0 0 auto;
     display: inline-block;
     width: 52px;
     height: 52px;
