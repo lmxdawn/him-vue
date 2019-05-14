@@ -49,10 +49,8 @@
             
             <header class="im-panel-header">
                 <div class="im-header-user">
-                    <div class="im-header-user-avatar">
-                        <img :src="user.avatar | getDefaultAvatar" alt="头像" style="width: 100%; height: 100%;">
-                    </div>
-                    <div style="margin-left: 8px;">
+                    <img class="im-header-user-avatar" :src="user.avatar | getDefaultAvatar" alt="头像">
+                    <div class="im-header-user-content">
                         <div class="im-header-user-name" :title="user.name">
                             {{ user.name }}
                         </div>
@@ -2424,29 +2422,29 @@ input {
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.06), 0 2px 0 0 rgba(0, 0, 0, 0.01);
     overflow: hidden;
     .im-header-user {
-        float: left;
-        padding-left: 8px;
         margin-top: 12px;
         display: flex;
+        align-items: center;
+        padding-left: 8px;
         .im-header-user-avatar {
             display: inline-block;
             width: 52px;
             height: 52px;
-            img {
-                width: 100%;
-                height: 100%;
-                border-radius: 50%;
-            }
+            border-radius: 50%;
+        }
+        .im-header-user-content {
+            display: inline-block;
+            overflow-x: hidden;
+            vertical-align: middle;
+            margin-left: 8px;
         }
         .im-header-user-name {
             display: inline-block;
-            width: 170px;
             margin-top: 5px;
             color: #000;
             @include text-overflow;
         }
         .im-header-user-remark {
-            width: 170px;
             margin-top: 1px;
             font-size: 13px;
             color: rgba(0,0,0,0.6);
@@ -2467,6 +2465,7 @@ input {
     }
     .im-header-setwin {
         position: absolute;
+        top: 5px;
         right: 5px;
     }
 }
