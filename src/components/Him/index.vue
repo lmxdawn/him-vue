@@ -2346,6 +2346,7 @@ input {
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
     border: 1px solid rgba(0, 0, 0, 0.05);
+    overflow-y: scroll;
 }
 .im-move {
     position: fixed;
@@ -2912,6 +2913,7 @@ input {
     z-index: 100;
     border-radius: 2px;
     border: 1px solid #D9D9D9;
+    overflow-y: hidden;
 }
 .im-chat-move {
     position: absolute;
@@ -3030,7 +3032,7 @@ input {
     width: 100%;
     padding: 15px 15px 5px;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     background-color: rgba(255, 255, 255, 0.9);
 }
 .im-chat-msg-box {
@@ -3285,6 +3287,10 @@ input {
         width: 100% !important;
         height: 100% !important;
         border: 0 !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    .im-chat-main {
+        -webkit-overflow-scrolling: touch;
     }
     .im-chat-box {
         width: 100%;
