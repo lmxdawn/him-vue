@@ -834,6 +834,7 @@ export default {
             this.chatMsgList = [];
             this.chatMsgGroupUserList = {};
             this.chatCount = 0;
+            this.userQRCodeImg = null;
             // 关闭websocket 连接
             this.wsOut();
         },
