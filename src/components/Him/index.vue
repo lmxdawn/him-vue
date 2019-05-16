@@ -1235,14 +1235,13 @@ export default {
         },
         // 朋友列表的点击
         friendClick(item) {
-            console.log(item);
             let data = {
                 type: 1,
                 id: item.friendUid,
                 name: item.remark ? item.remark : item.user.name,
                 avatar: item.user.avatar,
                 remark: item.user.remark,
-                unMsgCount: item.unMsgCount
+                unMsgCount: item.unMsgCount ? item.unMsgCount : 0
             };
             this.handleChat(data);
         },
@@ -1722,7 +1721,11 @@ export default {
                 return false;
             }
             let userFriendList = Object.assign({}, this.userFriendList);
-            userFriendList[uid] = user;
+            let userFriendItem = {
+                friendUid: uid,
+                user: user
+            };
+            userFriendList[uid] = userFriendItem;
             this.userFriendList = userFriendList;
             let historyType = 1; // 好友
             let unMsgCount = 1;
@@ -2353,7 +2356,6 @@ input {
     transition: transform .3s ease;
     transform: translate3d(0,100%,0);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    overflow-y: scroll;
 }
 .im-move {
     position: fixed;
@@ -2689,7 +2691,7 @@ only screen and (min-device-pixel-ratio: 2) {
     width: 100%;
     background-color: #fcfcfc;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     background-color: rgba(255, 255, 255, 0.9);
 }
 .im-group-create {
@@ -3296,6 +3298,8 @@ only screen and (min-device-pixel-ratio: 2) {
         width: 100% !important;
         height: 100% !important;
         border: 0 !important;
+    }
+    .im-panel-body {
         -webkit-overflow-scrolling: touch;
     }
     .im-chat-main {
