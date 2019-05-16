@@ -2184,11 +2184,19 @@ export default {
         // 获取浏览器可视区域高度
         this.clientHeight = `${document.documentElement.clientHeight}`;
         this.clientWidth = `${document.documentElement.clientWidth}`;
-        //console.log(self.clientHeight);
-        window.onresize = function temp() {
+
+        this.__resizeHandler = () => {
             this.clientHeight = `${document.documentElement.clientHeight}`;
             this.clientWidth = `${document.documentElement.clientWidth}`;
         };
+
+        // 添加事件
+        window.addEventListener("resize", this.__resizeHandler);
+    },
+    // 组件销毁
+    beforeDestroy() {
+        // 移除事件
+        window.removeEventListener("resize", this.__resizeHandler);
     },
     created() {
         // 判断是否自动初始化
