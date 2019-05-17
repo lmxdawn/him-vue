@@ -20,9 +20,9 @@
                 <div style="color: #99a9bf">注: 你会发现这个系统是适配手机端和PC端的</div>
                 <h5 style="margin-top: 20px;"><span>( 地址 )</span> </h5>
                 <div style="margin-top: 10px;">
-                    <a href="https://github.com/lmxdawn/him-vue" style="margin-left: 2px;"><img src="https://img.shields.io/badge/him-him--vue-1.svg"/></a>
-                    <a href="https://github.com/lmxdawn/him-netty" style="margin-left: 2px;"><img src="https://img.shields.io/badge/him-him--netty-1.svg"/></a>
-                    <a href="https://shang.qq.com/wpa/qunwpa?idkey=d4965fc7101936dcdea5eb1d05e2eaeb3128f20796028ee937ab516652083c6c" style="margin-left: 2px;"><img src="https://img.shields.io/badge/QQ%E7%BE%A4-210277856-orange.svg"/></a>
+                    <a href="https://github.com/lmxdawn/him-vue" style="margin-left: 2px;font-size: 25px;">him-vue</a>
+                    <a href="https://github.com/lmxdawn/him-netty" style="margin-left: 2px;font-size: 25px;">him-netty</a>
+                    <a href="https://shang.qq.com/wpa/qunwpa?idkey=d4965fc7101936dcdea5eb1d05e2eaeb3128f20796028ee937ab516652083c6c" style="margin-left: 2px;font-size: 25px;">QQ群</a>
                 </div>
 
                 <h3 style="color: red;margin-top: 10px;">点击右下角 ﹤我们开始聊天吧~﹥ 按钮</h3>
@@ -398,6 +398,10 @@ export default {
             // 清空浏览器地址栏的值, 这里其实是刷新当前页面
             this.$router.push("/");
         }
+        // 默认打开, 延时显示聊天界面
+        setTimeout(() => {
+            this.isShow = true;
+        }, 500);
     },
     created() {
         // 获取get参数
