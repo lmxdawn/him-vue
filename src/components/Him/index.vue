@@ -27,6 +27,7 @@
                 <div class="user-qrcode">
                     <img :src="userQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(userQRCodeImg)">
                     <div class="user-qrcode-download" @click.stop="downloadImg(userQRCodeImg)">点击/长按保存二维码</div>
+                    <div class="user-uid" @click.stop="">用户ID: {{user.uid}}</div>
                 </div>
             </div>
 
@@ -256,6 +257,7 @@
                 <div class="group-qrcode">
                     <img :src="groupQRCodeImg" alt="" style="display: block;" @click.stop="downloadImg(groupQRCodeImg)">
                     <div class="group-qrcode-download" @click.stop="downloadImg(groupQRCodeImg)">点击/长按保存二维码</div>
+                    <div class="group-id" @click.stop="">群ID: {{historyMsgListSelected.id}}</div>
                 </div>
             </div>
 
@@ -2450,8 +2452,7 @@ only screen and (min-device-pixel-ratio: 2) {
             overflow: hidden;
         }
         .im-header-user-name {
-            display: inline-block;
-            margin-top: 5px;
+            margin-top: 1px;
             color: #000;
             @include text-overflow;
         }
@@ -2570,6 +2571,12 @@ only screen and (min-device-pixel-ratio: 2) {
         text-align: center;
         color: #fff;
     }
+    .user-uid {
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        color: #fff;
+    }
 }
 .user-login-box {
     position: absolute;
@@ -2625,6 +2632,12 @@ only screen and (min-device-pixel-ratio: 2) {
     }
     .group-qrcode-download {
         cursor: pointer;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        color: #fff;
+    }
+    .group-id {
         height: 50px;
         line-height: 50px;
         text-align: center;
